@@ -1,6 +1,6 @@
 #pragma once
 #include "core/config_loader.h"
-#include "utils/args_parser.h"
+#include "core/tray.h"
 #include <gtkmm.h>
 namespace ui
 {
@@ -8,23 +8,31 @@ namespace ui
     {
         public:
             MainWindow();
-            ~MainWindow() = default;
+            ~MainWindow();
+            static MainWindow *get_instance();
+            void request_shutdown();
+
+            void scan_cache();
+            void clear_trash_bin();
             void show_window()
             {
                 m_window->show_all();
+            }
+            void hide_window()
+            {
+                m_window->hide();
             }
             Gtk::Window &get_window()
             {
                 return *m_window;
             }
 
+            static constexpr const char *DEFAULT_CLOSE_BUTTON_ICON = "window-close";
+            static constexpr const char *DEFAULT_MINIMIZE_BUTTON_ICON = "list-remove";
+            static constexpr const char *DEFAULT_SCAN_CACHE_BUTTON_ICON = "view-refresh";
+            static constexpr const char *DEFAULT_CLEAR_TRASH_BUTTON_ICON = "user-trash";
+
         private:
-            static constexpr int MIN_WIN_WIDTH = 550;
-            static constexpr int MIN_WIN_HEIGHT = 500;
-
-            static constexpr int DEFAULT_WIN_WIDTH = 700;
-            static constexpr int DEFAULT_WIN_HEIGHT = 650;
-
             static constexpr int DEFAULT_MARGIN = 10;
             static constexpr int DEFAULT_SPACING = 5;
             static constexpr int DEFAULT_PADDING = 0;
@@ -33,12 +41,6 @@ namespace ui
 
             static constexpr bool DEFAULT_DIALOG_MODAL = false;
             static constexpr bool DEFAULT_DIALOG_MARKUP = false;
-
-            static constexpr const char *DEFAULT_CLOSE_BUTTON_ICON = "window-close";
-            static constexpr const char *DEFAULT_SCAN_CACHE_BUTTON_ICON = "view-refresh";
-            static constexpr const char *DEFAULT_CLEAR_TRASH_BUTTON_ICON = "user-trash";
-
-            static constexpr std::uintmax_t UNKNOWN_SIZE = UINT32_MAX;
 
             static constexpr const char *SAFE_EXPANDER_TITLE = "Safe cache";
             static constexpr const char *SAFE_EXPANDER_DESC = "This cache is safe to clear";
@@ -58,15 +60,17 @@ namespace ui
             static constexpr const char *USER_EXPANDER_TITLE = "User cache";
             static constexpr const char *USER_EXPANDER_DESC = "Your own added cache";
 
+            static MainWindow *s_instance;
+
             const core::Config &m_config;
-            std::unique_ptr<Gtk::Window> m_window;
+            std::unique_ptr<Gtk::Window> m_window = nullptr;
             Glib::Dispatcher m_dispatcher;
             Gtk::Box *m_window_box = nullptr;
-
             Gtk::Box *m_top_box = nullptr;
             Gtk::ScrolledWindow *m_scroll = nullptr;
             Gtk::Box *m_content_box = nullptr;
             Gtk::Box *m_bottom_box = nullptr;
+            std::unique_ptr<core::Tray> m_tray = nullptr;
 
             Gtk::Expander *m_safe_expander = nullptr;
             Gtk::Expander *m_warning_expander = nullptr;
@@ -76,23 +80,27 @@ namespace ui
             bool m_expander_expanded = false;
 
             Gtk::Button *m_close_button = nullptr;
+            Gtk::Button *m_minimize_button = nullptr;
             Gtk::Button *m_scan_cache_button = nullptr;
             Gtk::Button *m_clear_trash_button = nullptr;
+
+            bool m_cleaning_in_progress = false;
+            sigc::connection m_grace_timer;
 
             void fill_content_box();
             void fill_bottom_box();
 
-            void scan_cache();
             void on_scan_cache_finished();
-            void scan_size();
-            void clear_trash_bin();
 
             Gtk::Expander *create_category(const std::string &title, const std::string &desc,
                                            const std::map<std::string, std::string> &paths);
 
-            bool confirm_deletion(std::vector<std::string> paths_to_clear, bool is_safe);
-            bool create_single_confirmation(const char *message);
-            bool create_double_confirmation(const char *message1, const char *message2);
+            bool confirm_deletion(bool is_safe, std::vector<std::string> paths_to_clear = {});
+            bool create_single_confirmation(const char *message, std::vector<std::string> paths_to_clear = {});
+            bool create_double_confirmation(const char *message1, const char *message2,
+                                            std::vector<std::string> paths_to_clear = {});
+
+            std::string get_preview_text(std::vector<std::string> paths_to_clear = {});
 
             struct CacheRow
             {

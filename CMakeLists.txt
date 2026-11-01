@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cache-cleaner VERSION 0.4.2 LANGUAGES C CXX)
+project(cache-cleaner VERSION 0.5.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20) # c++ version
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,7 +12,9 @@ include(GNUInstallDirs)
 find_package(PkgConfig REQUIRED)
 find_package(nlohmann_json REQUIRED)
 pkg_check_modules(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
+pkg_check_modules(APPINDICATOR REQUIRED IMPORTED_TARGET ayatana-appindicator3-0.1)
 
+# source files
 set(SOURCES
     src/main.cpp
 
@@ -20,8 +22,9 @@ set(SOURCES
     src/core/cli_tools.cpp
     src/core/config_loader.cpp
     src/core/constants.cpp
-    # src/core/notify-manager.cpp
-    # src/core/tray.cpp
+    src/core/signal_handler.cpp
+    src/core/notifications_manager.cpp
+    src/core/tray.cpp
 
     src/ui/css.cpp
     src/ui/main_window.cpp
@@ -36,8 +39,16 @@ set(SOURCES
 # compilation of all files
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-find_program(GLIB_COMPILE_RESOURCES glib-compile-resources)
+# ccache compilation caching
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
+endif()
 
+# gresource
+find_program(GLIB_COMPILE_RESOURCES glib-compile-resources)
 if(GLIB_COMPILE_RESOURCES)
     set(GRESOURCE_XML ${CMAKE_CURRENT_SOURCE_DIR}/assets/resources.gresource.xml)
     set(GRESOURCE_C ${CMAKE_CURRENT_BINARY_DIR}/resources.c)
@@ -49,10 +60,11 @@ if(GLIB_COMPILE_RESOURCES)
             --generate-source
             --sourcedir=${CMAKE_CURRENT_SOURCE_DIR}/assets
             ${GRESOURCE_XML}
-        DEPENDS ${GRESOURCE_XML} 
+        DEPENDS ${GRESOURCE_XML}
                 ${CMAKE_CURRENT_SOURCE_DIR}/assets/categories.json
                 ${CMAKE_CURRENT_SOURCE_DIR}/assets/package_managers.json
                 ${CMAKE_CURRENT_SOURCE_DIR}/assets/app_style.css
+                ${CMAKE_CURRENT_SOURCE_DIR}/assets/user_categories_template.json
         VERBATIM
     )
 
@@ -69,11 +81,15 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     PkgConfig::GTKMM
+    PkgConfig::APPINDICATOR
     nlohmann_json::nlohmann_json
 )
 
 target_precompile_headers(${PROJECT_NAME} PRIVATE
     <gtkmm.h>
+    <giomm.h>
+    <glibmm.h>
+    <nlohmann/json.hpp>
 )
 
 # variables (macros)

@@ -19,11 +19,10 @@
         { "name": "cargo", "desc": "Rust package cache\nRequires cargo-cache package\n(cargo install cargo-cache)", "path": "~/.cargo/registry/cache", "type": "command", "command": "cargo cache -a" },
         { "name": "yarn", "desc": "Node.js package manager", "path": "~/.cache/yarn", "type": "command", "command": "yarn cache clean" },
         { "name": "maven", "desc": "Java build tool", "path": "~/.m2/repository", "type": "command", "command": "mvn dependency:purge-local-repository" },
-        { "name": "composer-cache", "desc": "PHP package manager", "path": "~/.cache/composer", "type": "command", "command": "composer clear-cache" },
-        { "name": "composer-home", "desc": "PHP package manager", "path": "~/.composer/cache", "type": "command", "command": "composer clear-cache" },
+        { "name": "composer-cache", "desc": "PHP package manager (.cache dir)", "path": "~/.cache/composer", "type": "command", "command": "composer clear-cache" },
+        { "name": "composer-home", "desc": "PHP package manager (home dir)", "path": "~/.composer/cache", "type": "command", "command": "composer clear-cache" },
         { "name": "ruby", "desc": "RubyGems package manager", "path": "~/.gem/ruby", "type": "command", "command": "gem cleanup" },
         { "name": "bundler", "desc": "Ruby dependency manager", "path": "~/.bundle/cache", "type": "command", "command": "bundle clean --force" },
-        { "name": "deno", "desc": "Deno runtime cache", "path": "~/.cache/deno", "type": "path" },
 
         // (with path type)
         { "name": "cargo-registry", "desc": "Rust package cache", "path": "~/.cargo/registry/cache", "type": "path" },
@@ -33,6 +32,7 @@
         { "name": "zig", "desc": "Zig compiler cache", "path": "~/.cache/zig", "type": "path" },
         { "name": "swift-pm", "desc": "Swift package manager", "path": "~/.cache/org.swift.swiftpm", "type": "path" },
         { "name": "swift-cache", "desc": "Swift build cache", "path": "~/.swiftpm/cache", "type": "path" },
+        { "name": "deno", "desc": "Deno runtime cache", "path": "~/.cache/deno", "type": "path" },
 
         // other
         { "name": "Thumbnails", "desc": "Image preview cache", "path": "~/.cache/thumbnails", "type": "path" },

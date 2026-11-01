@@ -1,10 +1,9 @@
-#include "message_dialog_helper.h"
-#include "ui_helper.h"
+#include "ui/message_dialog_helper.h"
+#include "core/constants.h"
+#include "ui/ui_helper.h"
 #include "utils/console_logger.h"
 #include <atomic>
 #include <cstddef>
-#include <gtkmm/dialog.h>
-#include <gtkmm/label.h>
 Glib::Dispatcher ui::MessageDialogHelper::s_error_dispatcher;
 std::string ui::MessageDialogHelper::s_pending_error;
 std::mutex ui::MessageDialogHelper::s_error_mutex;
@@ -69,6 +68,8 @@ void ui::MessageDialogHelper::spawn_result_dialog(core::ClearReport &clear_repor
     }
     if (!clear_report.commands.empty())
     {
+        auto separator = Gtk::manage(new Gtk::Label(" "));
+        box->add(*separator);
         for (const auto &[command, status_code] : clear_report.commands)
         {
             auto *command_label =
@@ -77,6 +78,17 @@ void ui::MessageDialogHelper::spawn_result_dialog(core::ClearReport &clear_repor
             command_label->set_selectable(false);
             box->add(*command_label);
         }
+    }
+    if (clear_report.freed_bytes != 0)
+    {
+        auto separator = Gtk::manage(new Gtk::Label(" "));
+        box->add(*separator);
+
+        auto *bytes_freed_label = Gtk::manage(
+            new Gtk::Label("Freed " + core::format_size(clear_report.freed_bytes) + ", not including commands"));
+        bytes_freed_label->set_halign(Gtk::ALIGN_START);
+        bytes_freed_label->set_selectable(false);
+        box->add(*bytes_freed_label);
     }
 
     dialog->show_all();

@@ -3,26 +3,46 @@
 #include "core/config_loader.h"
 #include "core/constants.h"
 #include "core/enums.h"
+#include "core/notifications_manager.h"
+#include "core/signal_handler.h"
+#include "core/structs.h"
+#include "core/tray.h"
 #include "ui/css.h"
 #include "ui/message_dialog_helper.h"
 #include "ui_helper.h"
 #include "utils/console_logger.h"
 #include <cstdint>
 #include <future>
+#include <memory>
 #include <string>
+ui::MainWindow *ui::MainWindow::s_instance = nullptr;
+ui::MainWindow *ui::MainWindow::get_instance()
+{
+    return s_instance;
+}
+ui::MainWindow::~MainWindow()
+{
+    if (s_instance == this) s_instance = nullptr;
+}
 ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
 {
+    s_instance = this;
+
     m_window = std::make_unique<Gtk::Window>();
     m_window->set_title("Cache cleaner");
-    m_window->set_size_request(MIN_WIN_WIDTH, MIN_WIN_HEIGHT);
-    m_window->set_default_size(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT);
+    m_window->set_size_request(core::MIN_WIN_WIDTH, core::MIN_WIN_HEIGHT);
+    m_window->set_default_size(core::DEFAULT_WIN_WIDTH, core::DEFAULT_WIN_HEIGHT);
 
     m_window->signal_delete_event().connect(
-        [](GdkEventAny *event) -> bool
+        [this](GdkEventAny *event) -> bool
         {
+            if (m_cleaning_in_progress)
+            {
+                request_shutdown();
+                return true;
+            }
             auto app = Gtk::Application::get_default();
-            if (app)
-                app->quit();
+            if (app) app->quit();
             return true;
         }); // closes program
 
@@ -53,7 +73,34 @@ ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
 
     fill_content_box(); // fills middle part of the window
     fill_bottom_box();  // fills bottom menu of the window
+
     Css::apply_css();
+    m_tray = std::make_unique<core::Tray>(*this);
+}
+void ui::MainWindow::request_shutdown()
+{
+    if (m_cleaning_in_progress)
+    {
+        utils::ConsoleLogger::log(core::LogLevel::Warning, core::DEFAULT_INTERRUPT_MESSAGE);
+
+        if (!m_grace_timer.connected())
+        {
+            m_grace_timer = Glib::signal_timeout().connect_seconds(
+                []() -> bool
+                {
+                    utils::ConsoleLogger::log(core::LogLevel::Warning,
+                                              "Request shutdown timeout expired, forcing exit...");
+                    std::_Exit(130);
+                    return false;
+                },
+                core::DEFAULT_FORCE_EXIT_TIMEOUT);
+        }
+    }
+    else
+    {
+        auto app = Gtk::Application::get_default();
+        if (app) app->quit();
+    }
 }
 void ui::MainWindow::fill_content_box()
 {
@@ -62,7 +109,30 @@ void ui::MainWindow::fill_content_box()
     auto unknown_paths = core::ConfigLoader::get_paths_by_danger(core::DangerLevel::Unknown);
     auto system_paths = core::ConfigLoader::get_paths_by_danger(core::DangerLevel::System);
     auto user_paths = core::ConfigLoader::get_paths_by_danger(core::DangerLevel::User);
-    if (m_safe_expander || m_warning_expander || m_unknown_expander || m_user_expander)
+
+    auto filter_paths = ([](const std::map<std::string, std::string> &paths) -> std::map<std::string, std::string>
+        {
+            std::map<std::string, std::string> filtered_paths;
+            for (const auto &[name, path] : paths)
+            {
+                if (!core::CacheCleaner::exists(path))
+                {
+                        utils::ConsoleLogger::log(core::LogLevel::Debug,
+                                              ("name: " + name + ", path: " + path + " doesn't exist"));
+                    continue;
+                }
+                filtered_paths[name] = path;
+            }
+            return filtered_paths;
+        });
+
+    safe_paths = filter_paths(safe_paths);
+    warning_paths = filter_paths(warning_paths);
+    unknown_paths = filter_paths(unknown_paths);
+    system_paths = filter_paths(system_paths);
+    user_paths = filter_paths(user_paths);
+
+    if (m_safe_expander || m_warning_expander || m_unknown_expander || m_system_expander || m_user_expander)
     {
         m_safe_expander = nullptr;
         m_warning_expander = nullptr;
@@ -71,27 +141,20 @@ void ui::MainWindow::fill_content_box()
         m_user_expander = nullptr;
     }
 
-    if (!safe_paths.empty())
-        m_safe_expander = create_category(SAFE_EXPANDER_TITLE, SAFE_EXPANDER_DESC, safe_paths);
+    if (!safe_paths.empty()) m_safe_expander = create_category(SAFE_EXPANDER_TITLE, SAFE_EXPANDER_DESC, safe_paths);
     if (!warning_paths.empty())
         m_warning_expander = create_category(WARNING_EXPANDER_TITLE, WARNING_EXPANDER_DESC, warning_paths);
     if (!unknown_paths.empty())
         m_unknown_expander = create_category(UNKNOWN_EXPANDER_TITLE, UNKNOWN_EXPANDER_DESC, unknown_paths);
     if (!system_paths.empty())
         m_system_expander = create_category(SYSTEM_EXPANDER_TITLE, SYSTEM_EXPANDER_DESC, system_paths);
-    if (!user_paths.empty())
-        m_user_expander = create_category(USER_EXPANDER_TITLE, USER_EXPANDER_DESC, user_paths);
+    if (!user_paths.empty()) m_user_expander = create_category(USER_EXPANDER_TITLE, USER_EXPANDER_DESC, user_paths);
 
-    if (m_safe_expander)
-        m_content_box->pack_start(*m_safe_expander, false, false, 5);
-    if (m_warning_expander)
-        m_content_box->pack_start(*m_warning_expander, false, false, 5);
-    if (m_unknown_expander)
-        m_content_box->pack_start(*m_unknown_expander, false, false, 5);
-    if (m_system_expander)
-        m_content_box->pack_start(*m_system_expander, false, false, 5);
-    if (m_user_expander)
-        m_content_box->pack_start(*m_user_expander, false, false, 5);
+    if (m_safe_expander) m_content_box->pack_start(*m_safe_expander, false, false, 5);
+    if (m_warning_expander) m_content_box->pack_start(*m_warning_expander, false, false, 5);
+    if (m_unknown_expander) m_content_box->pack_start(*m_unknown_expander, false, false, 5);
+    if (m_system_expander) m_content_box->pack_start(*m_system_expander, false, false, 5);
+    if (m_user_expander) m_content_box->pack_start(*m_user_expander, false, false, 5);
 }
 void ui::MainWindow::fill_bottom_box()
 {
@@ -100,33 +163,13 @@ void ui::MainWindow::fill_bottom_box()
     ui::UIHelper::set_button_icon(*m_close_button, DEFAULT_CLOSE_BUTTON_ICON, DEFAULT_ICON_SIZE);
     m_bottom_box->pack_end(*m_close_button, false, false, 5);
 
+    m_minimize_button = Gtk::manage(new Gtk::Button("Minimize"));
+    m_minimize_button->signal_clicked().connect([this]() { hide_window(); });
+    ui::UIHelper::set_button_icon(*m_minimize_button, DEFAULT_MINIMIZE_BUTTON_ICON, DEFAULT_ICON_SIZE);
+    m_bottom_box->pack_end(*m_minimize_button, false, false, 5);
+
     m_scan_cache_button = Gtk::manage(new Gtk::Button("Scan cache"));
-    m_scan_cache_button->signal_clicked().connect(
-        [this]()
-        {
-            if (!m_scan_cache_button->get_sensitive())
-                return;
-
-            m_scan_cache_button->set_sensitive(false);
-            m_scan_cache_button->set_label("Scanning cache...");
-
-            std::thread(
-                [this]()
-                {
-                    try
-                    {
-                        scan_cache();
-                    }
-                    catch (const std::exception &e)
-                    {
-                        utils::ConsoleLogger::log(core::LogLevel::Error, "Failed to scan cache: ");
-                        utils::ConsoleLogger::log(core::LogLevel::Error, ("Message: " + std::string(e.what())));
-                        utils::ConsoleLogger::flush_errors_to_ui();
-                    }
-                    m_dispatcher.emit();
-                })
-                .detach();
-        });
+    m_scan_cache_button->signal_clicked().connect([this]() { scan_cache(); });
     ui::UIHelper::set_button_icon(*m_scan_cache_button, DEFAULT_SCAN_CACHE_BUTTON_ICON, DEFAULT_ICON_SIZE);
     m_bottom_box->pack_end(*m_scan_cache_button, false, false, 5);
 
@@ -137,9 +180,29 @@ void ui::MainWindow::fill_bottom_box()
 }
 void ui::MainWindow::scan_cache()
 {
-    core::ConfigLoader::load_config(); // scans caches
+    if (!m_scan_cache_button->get_sensitive()) return;
+
+    m_scan_cache_button->set_sensitive(false);
+    m_scan_cache_button->set_label("Scanning cache...");
+
+    std::thread(
+        [this]()
+        {
+            try
+            {
+                core::ConfigLoader::load_config(); // reloads categories config
+            }
+            catch (const std::exception &e)
+            {
+                utils::ConsoleLogger::log(core::LogLevel::Error, "Failed to scan cache: ");
+                utils::ConsoleLogger::log(core::LogLevel::Error, ("Message: " + std::string(e.what())));
+                utils::ConsoleLogger::flush_errors_to_ui();
+            }
+            m_dispatcher.emit();
+        })
+        .detach();
 }
-void ui::MainWindow::on_scan_cache_finished() // update all categories
+void ui::MainWindow::on_scan_cache_finished() // update content box after scanning cache
 {
     ui::UIHelper::clear_box(*m_content_box); // clear categories
     fill_content_box();                      // fill categories
@@ -157,8 +220,8 @@ void ui::MainWindow::on_scan_cache_finished() // update all categories
 void ui::MainWindow::clear_trash_bin()
 {
     create_single_confirmation("Are you sure you want to clear trash bin?");
-    std::thread thread(core::CacheCleaner::clear_trash_bin);
-    thread.join();
+    std::future<std::uintmax_t> bytes = core::CacheCleaner::clear_trash_bin();
+    core::NotifyManager::send_notification("Freed " + core::format_size(bytes.get()), "Cache cleaner: clearing done");
 }
 Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const std::string &desc,
                                                const std::map<std::string, std::string> &paths)
@@ -180,8 +243,6 @@ Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const s
     Gtk::Label *desc_label = Gtk::manage(new Gtk::Label(desc));
     desc_label->set_halign(Gtk::ALIGN_START);
     box->add(*desc_label);
-
-    // treeview creation
 
     auto columns = std::make_shared<ModelColumns>();
     Glib::RefPtr<Gtk::ListStore> ref_list_store = Gtk::ListStore::create(*columns);
@@ -214,8 +275,6 @@ Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const s
 
     box->add(*treeview);
 
-    //
-
     Gtk::Box *bottom_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, DEFAULT_SPACING));
 
     expander->add(*scroll);
@@ -228,26 +287,16 @@ Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const s
 
     for (const auto &[name, path] : paths)
     {
-        if (!core::CacheCleaner::exists(path))
-        {
-            if (std::string(PROJECT_BUILD_TYPE) == "Debug")
-                utils::ConsoleLogger::log(core::LogLevel::Debug,
-                                          ("name: " + name + ", path: " + path + " doesn't exist"));
-            continue;
-        }
-
-        if (std::string(PROJECT_BUILD_TYPE) == "Debug")
-            utils::ConsoleLogger::log(core::LogLevel::Debug, ("name: " + name + ", path: " + path + " exists"));
+        utils::ConsoleLogger::log(core::LogLevel::Debug, ("name: " + name + ", path: " + path + " exists"));
 
         futures[name] = (std::async(std::launch::async, core::CacheCleaner::size, path));
     }
     for (const auto &[name, path] : paths)
     {
         auto it = futures.find(name);
-        if (it == futures.end())
-            continue;
+        if (it == futures.end()) continue;
 
-        std::uintmax_t bytes = UNKNOWN_SIZE;
+        std::uintmax_t bytes = core::UNKNOWN_SIZE;
         try
         {
             bytes = it->second.get();
@@ -259,7 +308,7 @@ Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const s
             utils::ConsoleLogger::flush_errors_to_ui();
         }
 
-        std::string size_str = bytes == UNKNOWN_SIZE ? "unknown" : core::format_size(bytes);
+        std::string size_str = bytes == core::UNKNOWN_SIZE ? "Unknown" : core::format_size(bytes);
 
         std::string cache_desc;
         std::string command;
@@ -280,11 +329,10 @@ Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const s
     std::sort(cache_rows.begin(), cache_rows.end(),
               [](const CacheRow &a, const CacheRow &b)
               {
-                  bool a_unknown = (a.bytes == UNKNOWN_SIZE);
-                  bool b_unknown = (b.bytes == UNKNOWN_SIZE);
+                  bool a_unknown = (a.bytes == core::UNKNOWN_SIZE);
+                  bool b_unknown = (b.bytes == core::UNKNOWN_SIZE);
 
-                  if (a_unknown != b_unknown)
-                      return !a_unknown;
+                  if (a_unknown != b_unknown) return !a_unknown;
 
                   return a.bytes > b.bytes;
               });
@@ -308,7 +356,7 @@ Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const s
     bottom_box->pack_start(*choose_everything, false, false, 5);
 
     clear_selected->signal_clicked().connect(
-        [this, box, expander, columns, ref_list_store, paths]()
+        [ref_list_store, columns, expander, this]()
         {
             std::vector<std::string> paths_to_clear;
             auto children = ref_list_store->children();
@@ -323,25 +371,55 @@ Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const s
                     paths_to_clear.push_back(final_path);
                 }
             }
-            bool deletion_confirmed = confirm_deletion(paths_to_clear, expander->get_label() == SAFE_EXPANDER_TITLE);
+            bool deletion_confirmed = false;
+            if (paths_to_clear.size() > 0)
+                deletion_confirmed = confirm_deletion(expander->get_label() == SAFE_EXPANDER_TITLE, paths_to_clear);
             if (deletion_confirmed)
             {
-                auto result = core::CacheCleaner::sort_cache(paths_to_clear);
-                if (!result.paths.empty() || !result.commands.empty())
-                    ui::MessageDialogHelper::spawn_result_dialog(result);
+                m_cleaning_in_progress = true;
+                m_grace_timer.disconnect();
+
+                std::thread(
+                    [paths_to_clear, this]()
+                    {
+                        auto result = core::CacheCleaner::sort_cache(paths_to_clear);
+                        Glib::signal_idle().connect_once(
+                            [result, this]() mutable
+                            {
+                                m_cleaning_in_progress = false;
+                                m_grace_timer.disconnect();
+
+                                if (!result.paths.empty() || !result.commands.empty())
+                                {
+                                    ui::MessageDialogHelper::spawn_result_dialog(result);
+                                }
+                                if (result.freed_bytes != 0)
+                                {
+                                    core::NotifyManager::send_notification(
+                                        "Freed " + core::format_size(result.freed_bytes) + ", not including commands",
+                                        "Cache cleaner: clearing done");
+                                }
+
+                                if (core::g_shutdown_requested)
+                                {
+                                    auto app = Gtk::Application::get_default();
+                                    if (app) app->quit();
+                                }
+                            });
+                    })
+                    .detach();
             }
 
             for (auto iter = children.begin(); iter != children.end();
                  ++iter) // sets false to all toggles that were on after cleaning
             {
                 auto row = *iter;
-                if (row[columns->column_selected])
-                    row[columns->column_selected] = false;
+                if (row[columns->column_selected]) row[columns->column_selected] = false;
             }
         });
 
     choose_everything->signal_toggled().connect(
-        [box, choose_everything, columns, ref_list_store]()
+        [choose_everything, columns, ref_list_store]()
         {
             auto children = ref_list_store->children();
             for (auto iter = children.begin(); iter != children.end(); ++iter)
@@ -360,46 +438,66 @@ Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const s
     expander->show_all();
     return expander;
 }
-bool ui::MainWindow::confirm_deletion(std::vector<std::string> paths_to_clear, bool is_safe)
+bool ui::MainWindow::confirm_deletion(bool is_safe, std::vector<std::string> paths_to_clear)
 {
-    if (is_safe) // one confirmation for safe category before deleting
+    if (is_safe) // one confirmation for safe category
     {
-        if (paths_to_clear.size() <= 0)
-            return false;
-
-        return create_single_confirmation("Are you sure you want to clear this cache?");
+        return create_single_confirmation("Are you sure you want to clear this cache?", paths_to_clear);
     }
-    else // double confirmation for other categories before deleting
+    else // double confirmation for other categories
     {
-        if (paths_to_clear.size() <= 0)
-            return false;
-
-        bool dialog_response =
-            create_double_confirmation("Are you sure you want to clear this cache?\nThis may break some programs",
-                                       "Totally sure?\nThis can break your system");
-        if (!dialog_response)
-            return false;
-
-        return dialog_response;
+        return create_double_confirmation("Are you sure you want to clear this cache?\nThis may break some programs",
+                                          "Totally sure?\nThis can break your system", paths_to_clear);
     }
 }
-bool ui::MainWindow::create_single_confirmation(const char *message)
+bool ui::MainWindow::create_single_confirmation(const char *message, std::vector<std::string> paths_to_clear)
 {
     Gtk::MessageDialog dialog(*m_window, message, DEFAULT_DIALOG_MARKUP, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_YES_NO,
                               DEFAULT_DIALOG_MODAL);
 
+    std::string preview_text = get_preview_text(paths_to_clear);
+    dialog.set_secondary_text(preview_text);
+
+    dialog.hide();
     return dialog.run() == Gtk::RESPONSE_YES;
 }
-bool ui::MainWindow::create_double_confirmation(const char *message1, const char *message2)
+bool ui::MainWindow::create_double_confirmation(const char *message1, const char *message2,
+                                                std::vector<std::string> paths_to_clear)
 {
     Gtk::MessageDialog dialog1(*m_window, message1, DEFAULT_DIALOG_MARKUP, Gtk::MESSAGE_WARNING, Gtk::BUTTONS_YES_NO,
                                DEFAULT_DIALOG_MODAL);
 
-    if (dialog1.run() != Gtk::RESPONSE_YES)
-        return false;
+    std::string preview_text = get_preview_text(paths_to_clear);
+    dialog1.set_secondary_text(preview_text);
+
+    if (dialog1.run() != Gtk::RESPONSE_YES) return false;
+    dialog1.hide();
 
     Gtk::MessageDialog dialog2(*m_window, message2, DEFAULT_DIALOG_MARKUP, Gtk::MESSAGE_WARNING, Gtk::BUTTONS_YES_NO,
                                DEFAULT_DIALOG_MODAL);
 
+    dialog2.hide();
     return dialog2.run() == Gtk::RESPONSE_YES;
+}
+std::string ui::MainWindow::get_preview_text(std::vector<std::string> paths_to_clear)
+{
+    std::string preview_text;
+    core::ClearOptions options;
+    options.preview = true;
+
+    const auto filtered_paths = core::CacheCleaner::sort_cache(paths_to_clear, options);
+
+    if (!filtered_paths.paths.empty()) preview_text += "Paths to delete:\n\n";
+    for (const auto &cache : filtered_paths.paths)
+    {
+        preview_text += cache + "\n";
+    }
+
+    if (!filtered_paths.commands.empty()) preview_text += "\nCommands to execute:\n\n";
+    for (const auto &[command, exit_code] : filtered_paths.commands)
+    {
+        preview_text += command + "\n";
+    }
+
+    return preview_text;
 }

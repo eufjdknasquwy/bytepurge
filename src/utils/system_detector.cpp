@@ -22,8 +22,7 @@ void utils::SystemDetector::detect_distribution(const json &json_config)
         if (line.starts_with("ID="))
         {
             id = line.substr(3);
-            if (!id.empty() && id.front() == '"')
-                id = id.substr(1, id.size() - 2);
+            if (!id.empty() && id.front() == '"') id = id.substr(1, id.size() - 2);
         }
     }
     detect_package_managers(id, json_config);
@@ -42,8 +41,7 @@ void utils::SystemDetector::detect_package_managers(const std::string &distro_id
 }
 void utils::SystemDetector::detect_pm_by_distro_id(const std::string_view distro_id, const json &json_config)
 {
-    if (json_config.is_null())
-        return;
+    if (json_config.is_null()) return;
 
     const auto package_managers = json_config["package_managers"];
     for (const auto &[pm_name, distros] : package_managers.items())

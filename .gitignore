@@ -12,3 +12,8 @@ pkg/
 AppDir/
 src/cache-cleaner-linux-*/
 *.AppImage
+perf*
+report*
+flame*
+Flame*
+profile.sh

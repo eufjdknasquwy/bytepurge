@@ -1,6 +1,7 @@
 #include "core/enums.h"
 #include "core/structs.h"
 #include <fstream>
+#include <string_view>
 namespace utils
 {
     class ConsoleLogger
@@ -10,7 +11,8 @@ namespace utils
             static void init();
 
             static void printmsg(const std::string_view message);
-            static void print_help_msg(const int indent, const char *arg, const char *desc);
+            static void printerr(const std::string_view message);
+            static void print_help_msg(const int indent, std::string_view arg, std::string_view desc);
 
             static void log(const core::LogLevel level, const std::string_view message);
             static void flush_errors_to_ui();
@@ -27,6 +29,7 @@ namespace utils
             static std::string s_home_path;
             static std::string s_error_buffer;
             static std::ofstream s_log;
+            static std::mutex s_log_mutex;
 
             static std::string timestamp(const std::string format);
             static std::string level_to_str(const core::LogLevel level);

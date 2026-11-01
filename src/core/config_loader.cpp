@@ -1,5 +1,4 @@
 #include "config_loader.h"
-#include "core/cleaner.h"
 #include "core/constants.h"
 #include "core/enums.h"
 #include "utils/console_logger.h"
@@ -21,8 +20,7 @@ std::map<std::string, std::string> core::ConfigLoader::get_paths_by_danger(core:
     std::map<std::string, std::string> names_and_paths;
     for (const auto &entry : s_config.entries)
     {
-        if (entry.danger == danger)
-            names_and_paths[entry.name] = entry.path;
+        if (entry.danger == danger) names_and_paths[entry.name] = entry.path;
     }
     return names_and_paths;
 }
@@ -33,16 +31,14 @@ int core::ConfigLoader::load_json_file(json &json_config, const std::string &pat
         if (path.starts_with("/org/example/cache-cleaner/"))
         {
             json_config = load_embedded_json(path);
-            if (json_config.is_null() || json_config.empty())
-                return 1;
+            if (json_config.is_null() || json_config.empty()) return 1;
             return 0;
         }
         else
         {
             std::ifstream config_file;
             config_file.open(path);
-            if (!config_file.is_open())
-                throw std::runtime_error("Failed openning config");
+            if (!config_file.is_open()) throw std::runtime_error("Failed openning config");
             json_config = json::parse(config_file, nullptr, true, true);
             return 0;
         }
@@ -78,27 +74,7 @@ json core::ConfigLoader::load_embedded_json(const std::string &resource_path)
 {
     try
     {
-        GError *error = nullptr;
-        GBytes *bytes = g_resources_lookup_data(resource_path.c_str(), G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
-
-        if (error)
-        {
-            utils::ConsoleLogger::log(core::LogLevel::Error, "Failed to load resource: " + std::string(resource_path));
-            utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + error->message);
-            g_error_free(error);
-            utils::ConsoleLogger::flush_errors_to_ui();
-            return json::object();
-        }
-
-        if (!bytes)
-            return json::object();
-
-        gsize size;
-        gconstpointer data = g_bytes_get_data(bytes, &size);
-        std::string json_str(static_cast<const char *>(data), size);
-
-        g_bytes_unref(bytes);
-
+        std::string json_str = load_embedded_string(resource_path);
         return json::parse(json_str, nullptr, true, true);
     }
     catch (const std::runtime_error &e)
@@ -137,11 +113,9 @@ void core::ConfigLoader::fill_cache_entry(core::CacheEntry &cache, const json &e
 
         cache.path = entry.value("path", name);
 
-        if (entry.contains("type"))
-            cache.type = entry.value("type", "path");
+        if (entry.contains("type")) cache.type = entry.value("type", "path");
 
-        if (cache.type == "command" || entry.contains("command"))
-            cache.command = entry.value("command", "");
+        if (cache.type == "command" || entry.contains("command")) cache.command = entry.value("command", "");
 
         cache.danger = danger;
 
@@ -175,20 +149,18 @@ void core::ConfigLoader::fill_cache_entry(core::CacheEntry &cache, const json &e
 void core::ConfigLoader::load_config()
 {
     json json_config;
-    if (load_json_file(json_config, DEFAULT_CATEGORIES_PATH) != 0)
-        return;
+    if (load_json_file(json_config, core::DEFAULT_CATEGORIES_PATH) != 0) return;
 
     s_config.entries.clear();
     const auto categories = json_config["categories"];
     for (const auto &category : categories)
     {
-        if (!category.contains("danger_level") || !category.contains("entries"))
-            continue;
+        if (!category.contains("danger_level") || !category.contains("entries")) continue;
         const auto entries = category["entries"];
         for (const auto &entry : entries)
         {
             const std::string danger_str = category.value("danger_level", "Unknown");
-            const DangerLevel danger = parse_danger_level(danger_str);
+            const DangerLevel danger = str_to_danger(danger_str);
 
             CacheEntry cache;
             fill_cache_entry(cache, entry, danger);
@@ -202,14 +174,12 @@ void core::ConfigLoader::load_user_config()
     ensure_user_config_exists(); // makes sure user config exists
 
     json json_config;
-    if (load_json_file(json_config, get_user_categories_dir().string()) != 0)
-        return;
+    if (load_json_file(json_config, get_user_categories_dir().string()) != 0) return;
 
     const auto categories = json_config["categories"];
     for (const auto &category : categories)
     {
-        if (!category.contains("entries"))
-            continue;
+        if (!category.contains("entries")) continue;
         const auto entries = category["entries"];
         for (const auto &entry : entries)
         {
@@ -222,8 +192,7 @@ void core::ConfigLoader::load_user_config()
 void core::ConfigLoader::load_pm_config()
 {
     json json_config;
-    if (load_json_file(json_config, DEFAULT_PACKAGE_MANAGERS_PATH) != 0)
-        return;
+    if (load_json_file(json_config, core::DEFAULT_PACKAGE_MANAGERS_PATH) != 0) return;
 
     utils::SystemDetector::detect_distribution(json_config);
 }
@@ -254,27 +223,41 @@ void core::ConfigLoader::ensure_user_config_exists()
             utils::ConsoleLogger::log(core::LogLevel::Error, ("Cannot create " + config_file.string()));
             return;
         }
-        out << DEFAULT_USER_CONFIG;
+        std::string default_config = load_embedded_string("/org/example/cache-cleaner/user_categories_template.json");
+        if (default_config.empty())
+        {
+            utils::ConsoleLogger::log(core::LogLevel::Error,
+                                      "Failed to load user_categories_template.json from resources");
+            return;
+        }
+        out << default_config;
         utils::ConsoleLogger::log(core::LogLevel::Info, ("Created default config: " + config_file.string()));
     }
 }
 /** Converts string danger level to enum type,
  * example: "Safe" => DangerLevel::Safe
  */
-core::DangerLevel core::ConfigLoader::parse_danger_level(const std::string_view d)
+core::DangerLevel core::ConfigLoader::str_to_danger(const std::string_view d)
 {
-    if (d == "Safe")
-        return DangerLevel::Safe;
-    if (d == "Warning")
-        return DangerLevel::Warning;
-    if (d == "Unknown")
-        return DangerLevel::Unknown;
-    if (d == "System")
-        return DangerLevel::System;
-    if (d == "User")
-        return DangerLevel::User;
+    if (d == "Safe") return DangerLevel::Safe;
+    if (d == "Warning") return DangerLevel::Warning;
+    if (d == "Unknown") return DangerLevel::Unknown;
+    if (d == "System") return DangerLevel::System;
+    if (d == "User") return DangerLevel::User;
 
     return DangerLevel::Unknown;
+}
+std::string core::ConfigLoader::danger_to_str(core::DangerLevel d)
+{
+    switch (d)
+    {
+        case core::DangerLevel::Safe:    return "Safe";
+        case core::DangerLevel::Warning: return "Warning";
+        case core::DangerLevel::Unknown: return "Unknown";
+        case core::DangerLevel::System:  return "System";
+        case core::DangerLevel::User:    return "User";
+        default:                         return "Unknown";
+    }
 }
 void core::ConfigLoader::export_report_to_json(std::ofstream &report_file, core::ClearReport &clear_report)
 {
@@ -290,6 +273,7 @@ void core::ConfigLoader::export_report_to_json(std::ofstream &report_file, core:
         {
             j["commands"][command] = code;
         }
+        j["freed_size"] = core::format_size(clear_report.freed_bytes);
         try
         {
             report_file << j.dump(4);

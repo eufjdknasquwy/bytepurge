@@ -1,6 +1,25 @@
 # Changelog
 
-## Latest Patch (v0.4.2) - 2026-10-27
+## Latest stable release (v0.5.0) - 2026-11-01
+
+### Added
+- SIGINT/SIGTERM Handler
+- Tray
+- Notifications
+- Preview before deletion
+- Shows freed size in notifications and clear report
+- `--trash` option to clear trash bin
+- `--verbose` option to log debug messages
+
+### Changed
+- Optimized program loading and scanning cache
+- Default user config now creates from a template user config
+
+### Fixed
+- `--tray` option showing empty window
+- Async operations not being async (deleting should be much faster now)
+
+## Patch (v0.4.2) - 2026-10-27
 
 ### Fixed
 - Icon not being visible
@@ -19,7 +38,6 @@
 - Clear report export to `JSON`
 - Support for 95%+ Linux distributions package managers
 - Button `clear trash`
-- Cache sorts out by descending size
 - Colored logging in terminal
 - Changelog
 - Animations and custom style
@@ -28,10 +46,10 @@
 - Logging to file
 - User feedback in GUI (error messages)
 - AUR package (PKGBUILD)
-- Appimage
+- Appimage package
 
 ### Changed
-- Improved UI: cache sorted in tables, custom style with animations
+- Improved UI: cache sorts out in tables by size descending, custom style with animations
 - Improved JSON parsing: more flexible config
 
 ### Fixed

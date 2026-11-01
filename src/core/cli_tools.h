@@ -7,7 +7,8 @@ namespace core::cli
         public:
             CliTools() = delete;
             static void delete_category(core::DangerLevel danger);
-            static std::vector<std::string> list_all_categories();
+            static std::map<std::string, core::DangerLevel> list_all_categories();
+            static void clear_trash();
 
         private:
             static bool ask_confirmation(const char *prompt);

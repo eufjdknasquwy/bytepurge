@@ -13,7 +13,6 @@ namespace utils
             static void list_detections();
             static const PackageManagers &get_pms()
             {
-                detect_distribution();
                 return s_package_managers;
             }
             static void detect_distribution(const nlohmann::json &json_config = {});

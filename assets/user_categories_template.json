@@ -1,0 +1,12 @@
+{
+    "categories":
+    [
+        {
+            "entries":
+            [
+                { "name": "Example cache", "desc": "Example description for examle cache", "path": "~/.cache/example", "type": "path" },
+                { "name": "Example cache 2", "desc": "Example description for examle cache 2", "path": "~/.cache/example2", "type": "command", "command": "example-cache clean", "root": false }
+            ]
+        }
+    ]
+}

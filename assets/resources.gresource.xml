@@ -4,5 +4,6 @@
     <file>categories.json</file>
     <file>package_managers.json</file>
     <file>app_style.css</file>
+    <file>user_categories_template.json</file>
   </gresource>
 </gresources>

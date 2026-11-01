@@ -2,17 +2,20 @@
 #include "core/config_loader.h"
 #include "core/constants.h"
 #include "core/enums.h"
+#include "core/signal_handler.h"
 #include "utils/console_logger.h"
 #include "utils/system_detector.h"
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <future>
+#include <glibmm/spawn.h>
 #include <string>
-#include <thread>
 #include <unordered_set>
 namespace fs = std::filesystem;
-core::Config const &core::CacheCleaner::s_config = core::ConfigLoader::get_config();
+const core::Config &core::CacheCleaner::s_config = core::ConfigLoader::get_config();
 core::ClearReport core::CacheCleaner::s_del_result;
+std::mutex core::CacheCleaner::s_del_result_mutex;
 std::string core::CacheCleaner::expand_tilde(const std::string &path)
 {
     if (!path.empty() && path[0] == '~')
@@ -28,8 +31,7 @@ bool core::CacheCleaner::exists(const std::string &path_str)
     const auto &entries = core::ConfigLoader::get_config().entries;
     auto it = std::find_if(entries.begin(), entries.end(), [&](const auto &e) { return e.path == path_str; });
 
-    if (it == entries.end())
-        return false;
+    if (it == entries.end()) return false;
 
     if (it->danger == core::DangerLevel::System)
     {
@@ -37,12 +39,10 @@ bool core::CacheCleaner::exists(const std::string &path_str)
         return pms.names.contains(path_str);
     }
 
-    if (path_str.empty())
-        return true;
+    if (path_str.empty()) return true;
 
     std::string resolved = path_str;
-    if (resolved[0] == '~')
-        resolved.replace(0, 1, get_home_dir().string());
+    if (resolved[0] == '~') resolved.replace(0, 1, get_home_dir().string());
 
     return fs::exists(fs::path(resolved).lexically_normal());
 }
@@ -54,7 +54,7 @@ uintmax_t core::CacheCleaner::size(const std::string &path_str)
     {
         if (entry.danger == DangerLevel::System && (entry.path == path_str || entry.path == path))
         {
-            return UINT32_MAX;
+            return core::UNKNOWN_SIZE;
         }
     }
     if (!fs::is_directory(path))
@@ -77,8 +77,7 @@ uintmax_t core::CacheCleaner::size(const std::string &path_str)
         if (entry.is_regular_file(ec))
         {
             auto s = entry.file_size(ec);
-            if (!ec)
-                total += s;
+            if (!ec) total += s;
         }
     }
     return total;
@@ -99,6 +98,7 @@ core::ClearReport core::CacheCleaner::sort_cache(const std::vector<std::string> 
         }
     }
     clear_cache(filtered_paths, options);
+    std::lock_guard<std::mutex> lock(s_del_result_mutex);
     return s_del_result;
 }
 /** Clears cache
@@ -106,10 +106,15 @@ core::ClearReport core::CacheCleaner::sort_cache(const std::vector<std::string> 
  */
 void core::CacheCleaner::clear_cache(const std::vector<std::string> &paths_to_clear, const ClearOptions &options)
 {
-    if (options.cli)
-        Gio::init();
-    s_del_result.paths.clear();
-    s_del_result.commands.clear();
+    if (options.cli) Gio::init();
+
+    {
+        std::lock_guard<std::mutex> lock(s_del_result_mutex);
+        s_del_result.paths.clear();
+        s_del_result.commands.clear();
+        s_del_result.freed_bytes = 0;
+    }
+
     const fs::path home_path = get_home_dir();
 
     // aur helpers
@@ -132,44 +137,63 @@ void core::CacheCleaner::clear_cache(const std::vector<std::string> &paths_to_cl
         }
     }
     static const std::unordered_set<std::string> AUR_EXCEPTIONS{"completion.cache", "vcs.json"};
+
+    if (options.preview)
+    {
+        for (const auto &path : paths_to_clear)
+        {
+            s_del_result.paths.push_back(path);
+        }
+        for (const auto &[path, command] : command_paths)
+        {
+            auto it = std::find(paths_to_clear.begin(), paths_to_clear.end(), path);
+            if (it == paths_to_clear.end()) continue;
+
+            s_del_result.commands[command] = -1;
+        }
+        return;
+    }
+
+    std::vector<std::future<void>> delete_operations;
     for (const std::string_view path_str : paths_to_clear)
     {
+        if (g_shutdown_requested)
+        {
+            utils::ConsoleLogger::log(core::LogLevel::Warning, core::DEFAULT_INTERRUPT_MESSAGE);
+            return;
+        }
         fs::path path = fs::path(path_str).lexically_normal();
         if (!command_paths.contains(path) && !root_paths.contains(path) && !fs::exists(path))
         {
-            if (!options.dry_run)
+            if (!options.dry_run || !options.preview)
             {
                 utils::ConsoleLogger::log(core::LogLevel::Warning,
                                           "File or directory " + path.string() + " does not exist, proceeding");
             }
             continue;
         }
-        if (path == yay_dir)
-        {
-            if (!options.dry_run)
-                utils::ConsoleLogger::log(core::LogLevel::Info, "Deleting yay cache...");
-            else
-                utils::ConsoleLogger::printmsg("[dry-run] Would delete yay cache");
-
-            for (const auto &entry : fs::directory_iterator(yay_dir))
-            {
-                if (!AUR_EXCEPTIONS.contains(entry.path().filename().string()))
-                    delete_paths(entry, options);
-            }
-        }
-        else if (path == paru_dir)
-        {
-            if (!options.dry_run)
-                utils::ConsoleLogger::log(core::LogLevel::Info, "Deleting paru cache...");
-            else
-                utils::ConsoleLogger::printmsg("[dry-run] Would delete paru cache");
-
-            for (const auto &entry : fs::directory_iterator(paru_dir))
-            {
-                if (!AUR_EXCEPTIONS.contains(entry.path().filename().string()))
-                    delete_paths(entry, options);
-            }
-        }
+        // if (path == yay_dir)
+        // {
+        //     if (!options.dry_run || !options.preview)
+        //         utils::ConsoleLogger::log(core::LogLevel::Info, "Deleting yay cache...");
+        //     else if (options.dry_run) utils::ConsoleLogger::printmsg("[dry-run] Would delete yay cache");
+        //
+        //     for (const auto &entry : fs::directory_iterator(yay_dir))
+        //     {
+        //         if (!AUR_EXCEPTIONS.contains(entry.path().filename().string())) delete_paths(entry, options);
+        //     }
+        // }
+        // else if (path == paru_dir)
+        // {
+        //     if (!options.dry_run || !options.preview)
+        //         utils::ConsoleLogger::log(core::LogLevel::Info, "Deleting paru cache...");
+        //     else if (options.dry_run) utils::ConsoleLogger::printmsg("[dry-run] Would delete paru cache");
+        //
+        //     for (const auto &entry : fs::directory_iterator(paru_dir))
+        //     {
+        //         if (!AUR_EXCEPTIONS.contains(entry.path().filename().string())) delete_paths(entry, options);
+        //     }
+        // }
         else
         {
             auto it = command_paths.find(path);
@@ -184,76 +208,89 @@ void core::CacheCleaner::clear_cache(const std::vector<std::string> &paths_to_cl
                 {
                     command = it->second;
                 }
-                run_command(command, options);
+                delete_operations.push_back(run_command(command, options));
                 continue;
             }
             if (!options.dry_run)
-                utils::ConsoleLogger::log(core::LogLevel::Info, ("Deleting " + path.string()));
+                utils::ConsoleLogger::log(core::LogLevel::Info, ("Deleting " + path.string() + " to trash"));
             if (fs::is_directory(path))
             {
-                delete_paths(std::string(path), options);
+                delete_operations.push_back(delete_paths(path.string(), options));
             }
             else
             {
-                delete_paths(fs::directory_entry(path), options);
+                delete_operations.push_back(delete_paths(fs::directory_entry(path).path().string(), options));
             }
         }
     }
+    for (auto &operation : delete_operations)
+    {
+        try
+        {
+            operation.get();
+        }
+        catch (std::exception &e)
+        {
+            utils::ConsoleLogger::log(core::LogLevel::Error, "Deletion task failed: ");
+            utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
+        }
+    }
+    utils::ConsoleLogger::log(core::LogLevel::Info, "Done clearing cache");
 }
-void core::CacheCleaner::run_command(const std::string &command, const ClearOptions &options)
+std::future<void> core::CacheCleaner::run_command(const std::string &command, const ClearOptions &options)
 {
+    if (options.preview || g_shutdown_requested) return void_future();
     if (options.dry_run)
     {
         utils::ConsoleLogger::printmsg(("[dry-run] Would run: " + command));
-        return;
+        return void_future();
     }
-    utils::ConsoleLogger::log(core::LogLevel::Info, ("Running: " + command));
 
-    struct CommandResult
-    {
-            int exit_code = 1;
+    return std::async(
+        std::launch::async,
+        [command, options]() -> void
+        {
+            utils::ConsoleLogger::log(core::LogLevel::Info, ("Running: " + command));
+
+            int exit_code = -1;
             std::string stdout_str = "";
             std::string stderr_str = "";
-    };
-    CommandResult result;
 
-    try
-    {
-        std::future<void> run_command_async = std::async(
-            std::launch::async, [command, &result]() -> void
-            { Glib::spawn_command_line_sync(command, &result.stdout_str, &result.stderr_str, &result.exit_code); });
+            try
+            {
+                if (g_shutdown_requested) return;
 
-        run_command_async.get();
+                Glib::spawn_command_line_sync(command, &stdout_str, &stderr_str, &exit_code);
+                // Glib::spawn_command_line_async(command);
 
-        if (result.exit_code == 0)
-            utils::ConsoleLogger::log(core::LogLevel::Info, ("Command succeeded: " + command));
-        else
-            utils::ConsoleLogger::log(
-                core::LogLevel::Error,
-                ("Command failed (status " + std::to_string(result.exit_code) + "): " + result.stderr_str));
-    }
-    catch (const Glib::Error &e)
-    {
-        utils::ConsoleLogger::log(core::LogLevel::Error, ("Failed to run " + command + ": " + std::string(e.what())));
-        utils::ConsoleLogger::log(core::LogLevel::Error, ("Code: " + std::to_string(e.code())));
-        result.exit_code = e.code();
-        utils::ConsoleLogger::flush_errors_to_ui();
-    }
-    catch (const std::exception &e)
-    {
-        utils::ConsoleLogger::log(core::LogLevel::Error, ("Failed to run " + command + ": " + e.what()));
-        utils::ConsoleLogger::flush_errors_to_ui();
-    }
-    s_del_result.commands[command] = result.exit_code;
+                if (exit_code == 0) utils::ConsoleLogger::log(core::LogLevel::Info, ("Command succeeded: " + command));
+                else
+                    utils::ConsoleLogger::log(core::LogLevel::Error, ("Command failed (status " +
+                                                                      std::to_string(exit_code) + "): " + stderr_str));
+            }
+            catch (const Glib::Error &e)
+            {
+                utils::ConsoleLogger::log(core::LogLevel::Error,
+                                          ("Failed to run " + command + ": " + std::string(e.what())));
+                utils::ConsoleLogger::log(core::LogLevel::Error, ("Code: " + std::to_string(e.code())));
+                exit_code = e.code();
+                utils::ConsoleLogger::flush_errors_to_ui();
+            }
+            catch (const std::exception &e)
+            {
+                utils::ConsoleLogger::log(core::LogLevel::Error, ("Failed to run " + command + ": " + e.what()));
+                utils::ConsoleLogger::flush_errors_to_ui();
+            }
+            std::lock_guard<std::mutex> lock(s_del_result_mutex);
+            s_del_result.commands[command] = exit_code;
+        });
 }
-void core::CacheCleaner::delete_paths(const fs::directory_entry &entry, const ClearOptions &options)
+std::future<void> core::CacheCleaner::delete_paths(const std::string &path, const ClearOptions &options)
 {
+    if (options.preview || g_shutdown_requested) return void_future();
     try
     {
-        std::string path = entry.path().string();
-        del_to_trash(path, options);
-        // std::thread thread(del_to_trash, path, options);
-        // thread.join();
+        return del_to_trash(path, options);
     }
     catch (const std::exception &e)
     {
@@ -261,66 +298,115 @@ void core::CacheCleaner::delete_paths(const fs::directory_entry &entry, const Cl
         utils::ConsoleLogger::log(core::LogLevel::Error, "Message: " + std::string(e.what()));
         utils::ConsoleLogger::flush_errors_to_ui();
     }
+    return void_future();
 }
-void core::CacheCleaner::delete_paths(const fs::path &fs_path, const ClearOptions &options)
+std::future<void> core::CacheCleaner::del_to_trash(const std::string &path, const core::ClearOptions &options)
 {
-    try
-    {
-        std::string path = fs_path.string();
-        del_to_trash(path, options);
-        // std::thread thread(del_to_trash, path, options);
-        // thread.join();
-    }
-    catch (const std::exception &e)
-    {
-        utils::ConsoleLogger::log(core::LogLevel::Error, "Failed to delete file: ");
-        utils::ConsoleLogger::log(core::LogLevel::Error, "Message: " + std::string(e.what()));
-        utils::ConsoleLogger::flush_errors_to_ui();
-    }
-}
-void core::CacheCleaner::del_to_trash(const std::string &path, const core::ClearOptions &options)
-{
+    if (options.preview || g_shutdown_requested) return void_future();
     if (options.dry_run)
     {
         utils::ConsoleLogger::printmsg(("[dry-run] Would delete: " + path));
-        return;
+        return void_future();
     }
-    try
-    {
-        auto file = Gio::File::create_for_path(path);
-        file->trash();
-        utils::ConsoleLogger::log(core::LogLevel::Info, ("Deleted " + path));
-        s_del_result.paths.push_back(path);
-    }
-    catch (const Glib::Error &e)
-    {
-        if (e.code() == Gio::Error::PERMISSION_DENIED)
+
+    return std::async(
+        std::launch::async,
+        [path]() -> void
         {
-            utils::ConsoleLogger::log(core::LogLevel::Warning,
-                                      ("Permission denied, skipping " + path + ", try running with sudo"));
-            utils::ConsoleLogger::flush_errors_to_ui();
-        }
-        else
-        {
-            utils::ConsoleLogger::log(core::LogLevel::Error,
-                                      ("Failed to delete " + path + ": " + std::string(e.what())));
-            utils::ConsoleLogger::flush_errors_to_ui();
-        }
-    }
-}
-void core::CacheCleaner::clear_trash_bin()
-{
-    std::thread(
-        []
-        {
-            std::string trash_path = Glib::get_user_data_dir() + "/Trash";
             try
             {
-                for (const auto &entry : fs::directory_iterator(trash_path + "/files"))
-                    fs::remove_all(entry.path());
+                if (g_shutdown_requested) return;
 
-                for (const auto &entry : fs::directory_iterator(trash_path + "/info"))
+                std::uintmax_t bytes = size(path);
+                auto file = Gio::File::create_for_path(path);
+                file->trash();
+
+                utils::ConsoleLogger::log(core::LogLevel::Info,
+                                          ("Deleted " + path + " to trash, cleared " + format_size(bytes)));
+                std::lock_guard<std::mutex> lock(s_del_result_mutex);
+                s_del_result.paths.push_back(path);
+                s_del_result.freed_bytes += bytes;
+            }
+            catch (const Glib::Error &e)
+            {
+                if (e.code() == Gio::Error::PERMISSION_DENIED)
+                {
+                    utils::ConsoleLogger::log(core::LogLevel::Warning,
+                                              ("Permission denied, skipping " + path + ", try running with sudo"));
+                    utils::ConsoleLogger::flush_errors_to_ui();
+                }
+                else
+                {
+                    utils::ConsoleLogger::log(core::LogLevel::Error,
+                                              ("Failed to delete " + path + " to trash: " + std::string(e.what())));
+                    utils::ConsoleLogger::flush_errors_to_ui();
+                }
+            }
+        });
+}
+std::future<std::uintmax_t> core::CacheCleaner::clear_trash_bin(const core::ClearOptions &options)
+{
+    utils::ConsoleLogger::log(core::LogLevel::Info, "Clearing trash bin...");
+
+    return std::async(
+        std::launch::async,
+        [&options]() -> std::uintmax_t
+        {
+            std::string trash_path = Glib::get_user_data_dir() + "/Trash";
+            std::string trash_files_path = trash_path + "/files";
+            std::string trash_info_path = trash_path + "/info";
+
+            std::uintmax_t before_files_bytes = core::CacheCleaner::size(trash_files_path);
+            std::uintmax_t before_info_bytes = core::CacheCleaner::size(trash_info_path);
+            std::uintmax_t before_overall_bytes = before_files_bytes + before_info_bytes;
+
+            std::uintmax_t after_files_bytes = 0;
+            std::uintmax_t after_info_bytes = 0;
+            std::uintmax_t after_overall_bytes = 0;
+
+            auto count_size_after_deletion =
+                [&after_files_bytes, &after_info_bytes, &after_overall_bytes, &trash_files_path, &trash_info_path]()
+            {
+                after_files_bytes = core::CacheCleaner::size(trash_files_path);
+                after_info_bytes = core::CacheCleaner::size(trash_info_path);
+                after_overall_bytes = after_files_bytes + after_info_bytes;
+            };
+            try
+            {
+                for (const auto &entry : fs::directory_iterator(trash_files_path))
+                {
+                    if (g_shutdown_requested)
+                    {
+                        utils::ConsoleLogger::log(core::LogLevel::Warning, core::DEFAULT_INTERRUPT_MESSAGE);
+                        count_size_after_deletion();
+                        return before_overall_bytes - after_overall_bytes;
+                    }
+                    if (options.dry_run)
+                    {
+                        utils::ConsoleLogger::printmsg(("[dry-run] Would delete: " + std::string(entry.path())));
+                        continue;
+                    }
+                    utils::ConsoleLogger::log(core::LogLevel::Info, ("Deleting " + std::string(entry.path()) + " ..."));
                     fs::remove_all(entry.path());
+                }
+                for (const auto &entry : fs::directory_iterator(trash_info_path))
+                {
+                    if (g_shutdown_requested)
+                    {
+                        utils::ConsoleLogger::log(core::LogLevel::Warning, core::DEFAULT_INTERRUPT_MESSAGE);
+                        count_size_after_deletion();
+                        return before_overall_bytes - after_overall_bytes;
+                    }
+                    if (options.dry_run)
+                    {
+                        utils::ConsoleLogger::printmsg(("[dry-run] Would delete: " + std::string(entry.path())));
+                        continue;
+                    }
+                    utils::ConsoleLogger::log(core::LogLevel::Info, ("Deleting " + std::string(entry.path()) + " ..."));
+                    fs::remove_all(entry.path());
+                }
+                count_size_after_deletion();
+                utils::ConsoleLogger::log(core::LogLevel::Info, "Done clearing trash bin");
             }
             catch (const fs::filesystem_error &e)
             {
@@ -337,6 +423,12 @@ void core::CacheCleaner::clear_trash_bin()
                 utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
                 utils::ConsoleLogger::flush_errors_to_ui();
             }
-        })
-        .detach();
+            return before_overall_bytes - after_overall_bytes;
+        });
+}
+std::future<void> core::CacheCleaner::void_future()
+{
+    std::promise<void> p;
+    p.set_value();
+    return p.get_future();
 }

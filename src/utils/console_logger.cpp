@@ -1,7 +1,8 @@
-#include "console_logger.h"
+#include "utils/console_logger.h"
 #include "core/config_loader.h"
 #include "core/constants.h"
 #include "core/enums.h"
+#include "core/notifications_manager.h"
 #include "ui/message_dialog_helper.h"
 #include <ctime>
 #include <filesystem>
@@ -9,11 +10,13 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <string_view>
 namespace fs = std::filesystem;
 std::string utils::ConsoleLogger::s_home_path =
     core::get_home_dir().string().empty() ? "/tmp" : core::get_home_dir().string();
 std::string utils::ConsoleLogger::s_error_buffer;
 std::ofstream utils::ConsoleLogger::s_log;
+std::mutex utils::ConsoleLogger::s_log_mutex;
 void utils::ConsoleLogger::init()
 {
     std::string log_path = s_home_path + "/.local/state/cache-cleaner/log-" + timestamp("%Y-%m-%d_%H:%M") + ".txt";
@@ -28,7 +31,11 @@ void utils::ConsoleLogger::printmsg(const std::string_view message)
 {
     std::cout << message << std::endl;
 }
-void utils::ConsoleLogger::print_help_msg(const int indent, const char *arg, const char *desc)
+void utils::ConsoleLogger::printerr(const std::string_view message)
+{
+    std::cerr << message << std::endl;
+}
+void utils::ConsoleLogger::print_help_msg(const int indent, std::string_view arg, std::string_view desc)
 {
     std::cout << "  " << std::left << std::setw(indent) << arg << "  " << desc << std::endl;
 }
@@ -62,34 +69,42 @@ void utils::ConsoleLogger::log(const core::LogLevel level, const std::string_vie
 
     switch (level)
     {
-    case core::LogLevel::Info:
-        std::cout << GREEN << full_msg << RESET << std::endl;
-        break;
-    case core::LogLevel::Warning:
-        std::cout << YELLOW << full_msg << RESET << std::endl;
-        break;
-    case core::LogLevel::Error:
-    {
-        std::cout << RED << full_msg << RESET << std::endl;
-        std::lock_guard<std::mutex> lock(ui::MessageDialogHelper::s_error_mutex);
-        s_error_buffer += std::string(msg) + "\n";
-        break;
-    }
-    default:
-        std::cout << RESET << full_msg << RESET << std::endl;
-        break;
+        case core::LogLevel::Info: std::cout << GREEN << full_msg << RESET << "\n"; break;
+        case core::LogLevel::Warning:
+        {
+            std::cout << YELLOW << full_msg << RESET << "\n";
+            core::NotifyManager::send_notification("Logged warning. see log for more information",
+                                                   "Cache cleaner: warning");
+            break;
+        }
+        case core::LogLevel::Error:
+        {
+            std::cerr << RED << full_msg << RESET << "\n";
+            std::lock_guard<std::mutex> lock(ui::MessageDialogHelper::s_error_mutex);
+            s_error_buffer += std::string(msg) + "\n";
+            break;
+        }
+        case core::LogLevel::Debug:
+        {
+            constexpr std::string_view build_type = PROJECT_BUILD_TYPE;
+            if (build_type != "Debug" && !core::args.verbose) break;
+
+            std::cout << RESET << full_msg << RESET << std::endl;
+            break;
+        }
+        default: std::cout << RESET << full_msg << RESET << "\n"; break;
     }
 
     if (s_log.is_open())
     {
+        std::lock_guard<std::mutex> lock(s_log_mutex);
         s_log << full_msg << "\n";
         s_log.flush();
     }
 }
 void utils::ConsoleLogger::flush_errors_to_ui()
 {
-    if (s_error_buffer.empty())
-        return;
+    if (s_error_buffer.empty()) return;
 
     {
         std::lock_guard<std::mutex> lock(ui::MessageDialogHelper::s_error_mutex);
@@ -117,14 +132,11 @@ std::string utils::ConsoleLogger::level_to_str(const core::LogLevel level)
 {
     switch (level)
     {
-    case core::LogLevel::Info:
-        return "INFO";
-    case core::LogLevel::Warning:
-        return "WARNING";
-    case core::LogLevel::Error:
-        return "ERROR";
-    case core::LogLevel::Debug:
-        return "DEBUG";
+        case core::LogLevel::Info:    return "INFO";
+        case core::LogLevel::Warning: return "WARNING";
+        case core::LogLevel::Error:   return "ERROR";
+        case core::LogLevel::Debug:   return "DEBUG";
+        default:                      return "UNKNOWN";
     }
     return "UNKNOWN";
 }

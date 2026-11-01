@@ -1,3 +1,5 @@
+#include "core/constants.h"
+#include "utils/console_logger.h"
 #include <filesystem>
 #include <glibmm.h>
 namespace fs = std::filesystem;
@@ -36,6 +38,40 @@ namespace core
     {
         return project_root() / "src" / "config" / "app_style.css";
     }
+    std::string load_embedded_string(const std::string &resource_path)
+    {
+        try
+        {
+            GError *error = nullptr;
+            GBytes *bytes = g_resources_lookup_data(resource_path.c_str(), G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
+
+            if (error)
+            {
+                utils::ConsoleLogger::log(core::LogLevel::Error, "Failed to load resource: " + resource_path);
+                utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + error->message);
+                g_error_free(error);
+                utils::ConsoleLogger::flush_errors_to_ui();
+                return "";
+            }
+
+            if (!bytes) return "";
+
+            gsize size;
+            gconstpointer data = g_bytes_get_data(bytes, &size);
+            std::string result(static_cast<const char *>(data), size);
+
+            g_bytes_unref(bytes);
+            return result;
+        }
+        catch (std::exception &e)
+        {
+            utils::ConsoleLogger::log(core::LogLevel::Error,
+                                      "Unexpected error occured while trying to parse settings resource: ");
+            utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
+            utils::ConsoleLogger::flush_errors_to_ui();
+            return nullptr;
+        }
+    }
     std::string format_size(std::uintmax_t bytes)
     {
         const char *units[] = {"B", "KB", "MB", "GB", "TB"};
@@ -49,12 +85,9 @@ namespace core
         }
 
         char buf[32];
-        if (unit == 0)
-            std::snprintf(buf, sizeof(buf), "%ju %s", bytes, units[unit]);
-        else if (unit == 1)
-            std::snprintf(buf, sizeof(buf), "%.0f %s", size, units[unit]);
-        else
-            std::snprintf(buf, sizeof(buf), "%.1f %s", size, units[unit]);
+        if (unit == 0) std::snprintf(buf, sizeof(buf), "%ju %s", bytes, units[unit]);
+        else if (unit == 1) std::snprintf(buf, sizeof(buf), "%.0f %s", size, units[unit]);
+        else std::snprintf(buf, sizeof(buf), "%.1f %s", size, units[unit]);
 
         return buf;
     }
