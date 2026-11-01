@@ -81,7 +81,8 @@ See [Configuration](#configuration-1)
 - A C++20 compiler (GCC 10+ or Clang 11+ or other)
 - CMake 3.16+
 - nlohmann-json
-- gtkmm-3.0 (or gtkmm3-dev version)
+- gtkmm-3.0 (or -dev version)
+- libayatana-appindicator-3 (or -dev version)
 - GUI polkit agent (**recommended**, as program or system **may freeze** on system cache cleaning in GUI, if you do not have it. e.g. polkit-gnome)
 
 ## Installation

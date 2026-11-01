@@ -9,7 +9,7 @@ license=('MIT')
 depends=('gtkmm3' 'nlohmann-json' 'libayatana-appindicator')
 makedepends=('cmake' 'ninja')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
-sha256sums=('53d5c90fc7a6cc7422f0e8635a5cd5062ea88a5424e075db30709752eed71a06')
+sha256sums=('8fc67a5ddc29f9a06cdad59f10bb2db0075f4dbd8d102360e39f15480ed31868')
 
 build() {
   cmake -S "cache-cleaner-linux-$pkgver" -B build -G Ninja \
