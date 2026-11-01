@@ -11,11 +11,13 @@ mkdir -p AppDir/usr/bin
 mkdir -p AppDir/usr/share/applications
 mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
 
+rsvg-convert -w 256 -h 256 assets/cache-cleaner.svg -o cache-cleaner.png
+
 # copying assets
 cp build/cache-cleaner AppDir/usr/bin/
 cp assets/cache-cleaner.desktop AppDir/cache-cleaner.desktop
-cp assets/cache-cleaner.svg AppDir/cache-cleaner.svg
-cp assets/cache-cleaner.svg AppDir/usr/share/icons/hicolor/256x256/apps/
+cp assets/cache-cleaner.png AppDir/cache-cleaner.png
+cp assets/cache-cleaner.png AppDir/usr/share/icons/hicolor/256x256/apps/cache-cleaner.png
 
 # installing linuxdeploy
 if [ ! -f "linuxdeploy-x86_64.AppImage" ]; then
