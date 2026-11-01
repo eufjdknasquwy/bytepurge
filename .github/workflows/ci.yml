@@ -38,7 +38,7 @@ jobs:
         mkdir -p ~/.cache/gtk-4.0
         touch ~/.cache/gtk-4.0/test_file.txt
 
-        ./build/cache-cleaner --delete-warning --dry-run
+        ./build/cache-cleaner --clear-warning --dry-run
 
     - name: Build AppImage
       if: startsWith(github.ref, 'refs/tags/')
