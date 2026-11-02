@@ -30,8 +30,8 @@ jobs:
     - name: Upload binary artifact
       uses: actions/upload-artifact@v4
       with:
-        name: cache-cleaner-bin
-        path: build/cache-cleaner
+        name: bytepurge-bin
+        path: build/bytepurge
         retention-days: 1
 
   test:
@@ -48,23 +48,23 @@ jobs:
     - name: Download binary artifact
       uses: actions/download-artifact@v4
       with:
-        name: cache-cleaner-bin
+        name: bytepurge-bin
         path: build/
 
     - name: Make binary executable
-      run: chmod +x build/cache-cleaner
+      run: chmod +x build/bytepurge
 
     - name: Smoke Test
-      run: ./build/cache-cleaner --version
+      run: ./build/bytepurge --version
 
     - name: Smoke Test 2
-      run: ./build/cache-cleaner --list | grep apt
+      run: ./build/bytepurge --list | grep apt
 
     - name: Integration Test (CLI)
       run: |
         mkdir -p ~/.cache/gtk-4.0
         touch ~/.cache/gtk-4.0/test_file.txt
-        ./build/cache-cleaner --clear-warning --dry-run | grep gtk-4.0
+        ./build/bytepurge --clear-warning --dry-run | grep gtk-4.0
 
   release:
     needs: build
@@ -84,11 +84,11 @@ jobs:
     - name: Download binary artifact
       uses: actions/download-artifact@v4
       with:
-        name: cache-cleaner-bin
+        name: bytepurge-bin
         path: build/
 
     - name: Make binary executable
-      run: chmod +x build/cache-cleaner
+      run: chmod +x build/bytepurge
 
     - name: Build AppImage
       id: build_appimage
@@ -103,7 +103,7 @@ jobs:
       if: always() && startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          build/cache-cleaner
-          cache-cleaner-x86_64.AppImage
+          build/bytepurge
+          bytepurge-x86_64.AppImage
         fail_on_unmatched_files: false
         generate_release_notes: true

@@ -31,7 +31,7 @@ A utility for Linux to free disk space by cleaning caches of package managers an
 
 ## Status
 
-**Alpha v0.5.0** — supports `yay`, `paru`, `pip`, `go`, `nuget`, `npm`,
+**Alpha v0.5.1** — supports `yay`, `paru`, `pip`, `go`, `nuget`, `npm`,
 and system caches: `pacman`, `apt`, `dnf`, `flatpak`, `snap`, `journalctl`.
 Supports GUI and CLI (headless) modes.
 
