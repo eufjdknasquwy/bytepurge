@@ -9,6 +9,7 @@
 #include "core/tray.h"
 #include "ui/css.h"
 #include "ui/message_dialog_helper.h"
+#include "ui/settings_window.h"
 #include "ui_helper.h"
 #include "utils/console_logger.h"
 #include <cstdint>
@@ -46,18 +47,9 @@ ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
             return true;
         }); // closes program
 
-    Gtk::HeaderBar *header_bar = Gtk::manage(new Gtk::HeaderBar());
-    header_bar->set_title(std::string(PROJECT_GENERIC_NAME) + " v" + std::string(PROJECT_VERSION));
-    header_bar->set_show_close_button(true);
-
-    Gtk::Button *settings_btn = Gtk::manage(new Gtk::Button());
-    settings_btn->set_image(*Gtk::manage(new Gtk::Image("preferences-system-symbolic", Gtk::ICON_SIZE_BUTTON)));
-    settings_btn->set_tooltip_text("Settings");
-    settings_btn->signal_clicked().connect([]() {});
-
-    // Gtk::Label *title = Gtk::manage(new Gtk::Label()); // window title
-    // title->set_markup("<b>" + std::string(PROJECT_GENERIC_NAME) + " v" + std::string(PROJECT_VERSION) + "</b>");
-    // title->set_halign(Gtk::ALIGN_START);
+    m_header_bar = Gtk::manage(new Gtk::HeaderBar());
+    m_header_bar->set_title(std::string(PROJECT_GENERIC_NAME) + " v" + std::string(PROJECT_VERSION));
+    m_header_bar->set_show_close_button(true);
 
     m_dispatcher.connect(sigc::mem_fun(*this, &ui::MainWindow::on_scan_cache_finished));
 
@@ -66,21 +58,15 @@ ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
     ui::UIHelper::set_margin(*m_window_box, DEFAULT_MARGIN);
 
     // splitting the window into 3 containers
-    m_top_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, DEFAULT_SPACING));
     m_scroll = Gtk::manage(new Gtk::ScrolledWindow());
     m_scroll->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     m_content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, DEFAULT_SPACING));
-    m_bottom_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, DEFAULT_SPACING));
+    m_footer_bar = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, DEFAULT_SPACING));
 
     // adding 3 window containers
-    m_window_box->pack_start(*m_top_box, false, false, DEFAULT_PADDING);
     m_scroll->add(*m_content_box);
     m_window_box->pack_start(*m_scroll, true, true, DEFAULT_PADDING);
-    m_window_box->pack_end(*m_bottom_box, false, false, DEFAULT_PADDING);
-
-    header_bar->pack_end(*settings_btn);
-    m_window->set_titlebar(*header_bar);
-    // m_top_box->pack_start(*title, false, false, DEFAULT_PADDING);
+    m_window_box->pack_end(*m_footer_bar, false, false, DEFAULT_PADDING);
 
     fill_header_bar();  // fills window header bar
     fill_content_box(); // fills middle part of the window
@@ -116,6 +102,19 @@ void ui::MainWindow::request_shutdown()
 }
 void ui::MainWindow::fill_header_bar()
 {
+    Gtk::Button *settings_btn = Gtk::manage(new Gtk::Button());
+    settings_btn->set_image(*Gtk::manage(new Gtk::Image("preferences-system-symbolic", Gtk::ICON_SIZE_BUTTON)));
+    settings_btn->set_tooltip_text("Settings");
+    settings_btn->signal_clicked().connect(
+        [this]()
+        {
+            if (!m_settings_window) m_settings_window = std::make_unique<ui::SettingsWindow>();
+            m_settings_window->open_settings_window();
+        });
+
+    m_header_bar->pack_end(*settings_btn);
+
+    m_window->set_titlebar(*m_header_bar);
 }
 void ui::MainWindow::fill_content_box()
 {
@@ -176,22 +175,22 @@ void ui::MainWindow::fill_footer_bar()
     m_close_button = Gtk::manage(new Gtk::Button("Close"));
     m_close_button->signal_clicked().connect([this]() { m_window->close(); });
     ui::UIHelper::set_button_icon(*m_close_button, DEFAULT_CLOSE_BUTTON_ICON, DEFAULT_ICON_SIZE);
-    m_bottom_box->pack_end(*m_close_button, false, false, 5);
+    m_footer_bar->pack_end(*m_close_button, false, false, 5);
 
     m_minimize_button = Gtk::manage(new Gtk::Button("Minimize"));
     m_minimize_button->signal_clicked().connect([this]() { hide_window(); });
     ui::UIHelper::set_button_icon(*m_minimize_button, DEFAULT_MINIMIZE_BUTTON_ICON, DEFAULT_ICON_SIZE);
-    m_bottom_box->pack_end(*m_minimize_button, false, false, 5);
+    m_footer_bar->pack_end(*m_minimize_button, false, false, 5);
 
     m_scan_cache_button = Gtk::manage(new Gtk::Button("Scan cache"));
     m_scan_cache_button->signal_clicked().connect([this]() { scan_cache(); });
     ui::UIHelper::set_button_icon(*m_scan_cache_button, DEFAULT_SCAN_CACHE_BUTTON_ICON, DEFAULT_ICON_SIZE);
-    m_bottom_box->pack_end(*m_scan_cache_button, false, false, 5);
+    m_footer_bar->pack_end(*m_scan_cache_button, false, false, 5);
 
     m_clear_trash_button = Gtk::manage(new Gtk::Button("Clear trash"));
     m_clear_trash_button->signal_clicked().connect([this]() { clear_trash_bin(); });
     ui::UIHelper::set_button_icon(*m_clear_trash_button, DEFAULT_CLEAR_TRASH_BUTTON_ICON, DEFAULT_ICON_SIZE);
-    m_bottom_box->pack_end(*m_clear_trash_button, false, false, 5);
+    m_footer_bar->pack_end(*m_clear_trash_button, false, false, 5);
 }
 void ui::MainWindow::scan_cache()
 {

@@ -1,7 +1,9 @@
 #pragma once
 #include "core/config_loader.h"
 #include "core/tray.h"
+#include "ui/settings_window.h"
 #include <gtkmm.h>
+#include <memory>
 namespace ui
 {
     class MainWindow
@@ -66,10 +68,11 @@ namespace ui
             std::unique_ptr<Gtk::Window> m_window = nullptr;
             Glib::Dispatcher m_dispatcher;
             Gtk::Box *m_window_box = nullptr;
-            Gtk::Box *m_top_box = nullptr;
+            Gtk::HeaderBar *m_header_bar = nullptr;
             Gtk::ScrolledWindow *m_scroll = nullptr;
             Gtk::Box *m_content_box = nullptr;
-            Gtk::Box *m_bottom_box = nullptr;
+            Gtk::Box *m_footer_bar = nullptr;
+            std::unique_ptr<ui::SettingsWindow> m_settings_window = nullptr;
             std::unique_ptr<core::Tray> m_tray = nullptr;
 
             Gtk::Expander *m_safe_expander = nullptr;

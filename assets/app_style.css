@@ -29,6 +29,33 @@ label.title {
   color: white;
 }
 
+headerbar {
+  background-color: @bg_light;
+  border-bottom: 1px solid @border_color;
+  min-height: 24px;
+  padding: 0 6px;
+  box-shadow: none;
+}
+
+headerbar button {
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 4px;
+  min-height: 24px;
+  min-width: 24px;
+  box-shadow: none;
+}
+
+headerbar button:hover {
+  background-color: alpha(@text_main, 0.1);
+  border: none;
+}
+
+headerbar title {
+  color: white;
+}
+
 button {
   background-color: @bg_panel;
   color: white;
