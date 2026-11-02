@@ -60,7 +60,7 @@ void utils::ArgsParser::parse(int &argc, char *argv[])
 }
 void utils::ArgsParser::print_help()
 {
-    utils::ConsoleLogger::printmsg("Usage: cache-cleaner [OPTION...]");
+    utils::ConsoleLogger::printmsg("Usage: " + std::string(PROJECT_NAME) + " [OPTION...]");
     utils::ConsoleLogger::printmsg("");
     utils::ConsoleLogger::printmsg("Options:");
 

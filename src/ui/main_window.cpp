@@ -29,7 +29,7 @@ ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
     s_instance = this;
 
     m_window = std::make_unique<Gtk::Window>();
-    m_window->set_title("Cache cleaner");
+    m_window->set_title(std::string(PROJECT_GENERIC_NAME) + " v" + std::string(PROJECT_VERSION));
     m_window->set_size_request(core::MIN_WIN_WIDTH, core::MIN_WIN_HEIGHT);
     m_window->set_default_size(core::DEFAULT_WIN_WIDTH, core::DEFAULT_WIN_HEIGHT);
 
@@ -47,7 +47,7 @@ ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
         }); // closes program
 
     Gtk::Label *title = Gtk::manage(new Gtk::Label()); // window title
-    title->set_markup("<b>Cache cleaner</b>");
+    title->set_markup("<b>" + std::string(PROJECT_GENERIC_NAME) + " v" + std::string(PROJECT_VERSION) + "</b>");
     title->set_halign(Gtk::ALIGN_START);
 
     m_dispatcher.connect(sigc::mem_fun(*this, &ui::MainWindow::on_scan_cache_finished));
@@ -221,7 +221,8 @@ void ui::MainWindow::clear_trash_bin()
 {
     create_single_confirmation("Are you sure you want to clear trash bin?");
     std::future<std::uintmax_t> bytes = core::CacheCleaner::clear_trash_bin();
-    core::NotifyManager::send_notification("Freed " + core::format_size(bytes.get()), "Cache cleaner: clearing done");
+    core::NotifyManager::send_notification("Freed " + core::format_size(bytes.get()),
+                                           std::string(PROJECT_GENERIC_NAME) + ": clearing done");
 }
 Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const std::string &desc,
                                                const std::map<std::string, std::string> &paths)
@@ -397,7 +398,7 @@ Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const s
                                 {
                                     core::NotifyManager::send_notification(
                                         "Freed " + core::format_size(result.freed_bytes) + ", not including commands",
-                                        "Cache cleaner: clearing done");
+                                        std::string(PROJECT_GENERIC_NAME) + ": clearing done");
                                 }
 
                                 if (core::g_shutdown_requested)

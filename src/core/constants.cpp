@@ -28,7 +28,7 @@ namespace core
     }
     fs::path get_user_categories_dir()
     {
-        return get_home_dir() / ".config" / "cache-cleaner" / "user_categories.json";
+        return get_home_dir() / ".config" / std::string(PROJECT_NAME) / "user_categories.json";
     }
     fs::path get_package_managers_dir()
     {

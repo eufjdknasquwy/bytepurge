@@ -12,9 +12,9 @@ void core::NotifyManager::send_notification(const std::string &body, const std::
                                                    "/org/freedesktop/Notifications", "org.freedesktop.Notifications");
 
         auto params = Glib::VariantContainerBase::create_tuple({
-            Glib::Variant<Glib::ustring>::create("cache-cleaner"),                 // app_name
+            Glib::Variant<Glib::ustring>::create(PROJECT_NAME),                    // app_name
             Glib::Variant<guint32>::create(0),                                     // replaces_id
-            Glib::Variant<Glib::ustring>::create("cache-cleaner"),                 // app_icon
+            Glib::Variant<Glib::ustring>::create(PROJECT_NAME),                    // app_icon
             Glib::Variant<Glib::ustring>::create(title),                           // summary
             Glib::Variant<Glib::ustring>::create(body),                            // body
             Glib::Variant<std::vector<Glib::ustring>>::create({}),                 // actions

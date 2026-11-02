@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cache-cleaner VERSION 0.5.0 LANGUAGES C CXX)
+project(bytepurge VERSION 0.5.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20) # c++ version
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -96,23 +96,33 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     PROJECT_ROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
     PROJECT_NAME="${PROJECT_NAME}"
+    PROJECT_GENERIC_NAME="Byte Purge"
     PROJECT_VERSION="${PROJECT_VERSION}"
     PROJECT_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
 )
 
-# cache-cleaner command installment
+# bytepurge command installment
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 # .desktop file installment
 install(FILES
-    assets/cache-cleaner.desktop
+    assets/bytepurge.desktop
     DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
 )
 
-# icon installment
+# svg (scalable) icon installment
 install(FILES
-    assets/cache-cleaner.svg
+    assets/icons/bytepurge.svg
     DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
 )
+
+# png icon installment of different resolutions
+set(ICON_SIZES 16 22 24 32 48 64 128 256 512)
+foreach(SIZE ${ICON_SIZES})
+    install(FILES
+        assets/icons/bytepurge-${SIZE}.png
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${SIZE}x${SIZE}/apps
+    )
+endforeach()

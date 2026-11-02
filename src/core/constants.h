@@ -24,9 +24,10 @@ namespace core
 
     inline constexpr std::uintmax_t UNKNOWN_SIZE = UINT32_MAX;
 
-    inline constexpr const char *DEFAULT_CATEGORIES_PATH = "/org/example/cache-cleaner/categories.json";
-    inline constexpr const char *DEFAULT_PACKAGE_MANAGERS_PATH = "/org/example/cache-cleaner/package_managers.json";
-    inline constexpr const char *DEFAULT_APP_STYLE_PATH = "/org/example/cache-cleaner/app_style.css";
+    inline constexpr const char *DEFAULT_CATEGOS_PATH = "/org/example/bytepurge/categories.json";
+    inline constexpr const char *DEFAULT_CATEGORIES_PATH = "/org/example/bytepurge/categories.json";
+    inline constexpr const char *DEFAULT_PACKAGE_MANAGERS_PATH = "/org/example/bytepurge/package_managers.json";
+    inline constexpr const char *DEFAULT_APP_STYLE_PATH = "/org/example/bytepurge/app_style.css";
     inline constexpr const char *DEFAULT_USER_CATEGORIES_TEMPLATE_PATH =
-        "/org/example/cache-cleaner/user_categories_template.json";
+        "/org/example/bytepurge/user_categories_template.json";
 } // namespace core

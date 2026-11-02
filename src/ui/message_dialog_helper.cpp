@@ -29,7 +29,7 @@ void ui::MessageDialogHelper::init_error_handler()
 }
 void ui::MessageDialogHelper::spawn_error_dialog(const std::string &message)
 {
-    auto [dialog, box] = create_dialog("Cache cleaner: error", "Cache cleaner: caught an error");
+    auto [dialog, box] = create_dialog(std::string(PROJECT_GENERIC_NAME) + ": error", "Cache cleaner: caught an error");
 
     auto *message_label = Gtk::manage(new Gtk::Label(message));
     message_label->set_halign(Gtk::ALIGN_START);
@@ -54,7 +54,8 @@ void ui::MessageDialogHelper::spawn_error_dialog(const std::string &message)
 }
 void ui::MessageDialogHelper::spawn_result_dialog(core::ClearReport &clear_report)
 {
-    auto [dialog, box] = create_dialog("Cache cleaner: deletion complete", "Cache has been successfully cleaned!");
+    auto [dialog, box] = create_dialog(std::string(PROJECT_GENERIC_NAME) + ": deletion complete",
+                                       "Cache has been successfully cleaned!");
 
     if (!clear_report.paths.empty())
     {

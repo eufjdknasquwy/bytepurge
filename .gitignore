@@ -1,8 +1,11 @@
+# compile
 build/
 .cache/
 compile_commands.json
 compile.sh
 .clangd
+
+# packages
 pkg/
 *.pkg.tar.zst
 *.tar.gz
@@ -12,8 +15,15 @@ pkg/
 AppDir/
 src/cache-cleaner-linux-*/
 *.AppImage
+
+# profiler
 perf*
 report*
 flame*
 Flame*
 profile.sh
+
+# icons
+base.svg
+broom.svg
+transform-icon.sh

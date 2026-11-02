@@ -9,15 +9,30 @@ cmake --build build
 rm -rf AppDir
 mkdir -p AppDir/usr/bin
 mkdir -p AppDir/usr/share/applications
-mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
 
-rsvg-convert -w 256 -h 256 assets/cache-cleaner.svg -o cache-cleaner.png
+mkdir -p AppDir/usr/share/icons/hicolor/16x16/apps
+mkdir -p AppDir/usr/share/icons/hicolor/22x22/apps
+mkdir -p AppDir/usr/share/icons/hicolor/24x24/apps
+mkdir -p AppDir/usr/share/icons/hicolor/32x32/apps
+mkdir -p AppDir/usr/share/icons/hicolor/48x48/apps
+mkdir -p AppDir/usr/share/icons/hicolor/64x64/apps
+mkdir -p AppDir/usr/share/icons/hicolor/128x128/apps
+mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
 
 # copying assets
-cp build/cache-cleaner AppDir/usr/bin/
-cp assets/cache-cleaner.desktop AppDir/cache-cleaner.desktop
-cp assets/cache-cleaner.png AppDir/cache-cleaner.png
-cp assets/cache-cleaner.png AppDir/usr/share/icons/hicolor/256x256/apps/cache-cleaner.png
+cp build/bytepurge AppDir/usr/bin/
+cp assets/bytepurge.desktop AppDir/bytepurge.desktop
+cp assets/icons/bytepurge-256.png AppDir/bytepurge.png
+cp assets/icons/bytepurge-16.png AppDir/usr/share/icons/hicolor/16x16/apps/bytepurge.png
+cp assets/icons/bytepurge-22.png AppDir/usr/share/icons/hicolor/22x22/apps/bytepurge.png
+cp assets/icons/bytepurge-24.png AppDir/usr/share/icons/hicolor/24x24/apps/bytepurge.png
+cp assets/icons/bytepurge-32.png AppDir/usr/share/icons/hicolor/32x32/apps/bytepurge.png
+cp assets/icons/bytepurge-48.png AppDir/usr/share/icons/hicolor/48x48/apps/bytepurge.png
+cp assets/icons/bytepurge-64.png AppDir/usr/share/icons/hicolor/64x64/apps/bytepurge.png
+cp assets/icons/bytepurge-128.png AppDir/usr/share/icons/hicolor/128x128/apps/bytepurge.png
+cp assets/icons/bytepurge-256.png AppDir/usr/share/icons/hicolor/256x256/apps/bytepurge.png
+cp assets/icons/bytepurge-512.png AppDir/usr/share/icons/hicolor/512x512/apps/bytepurge.png
 
 # installing linuxdeploy
 if [ ! -f "linuxdeploy-x86_64.AppImage" ]; then
@@ -29,6 +44,6 @@ fi
 ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run --appdir AppDir --output appimage
 
 # renaming appimage
-mv Cache_Cleaner*.AppImage cache-cleaner-x86_64.AppImage || true
+mv Byte_Purge*.AppImage bytepurge-x86_64.AppImage || true
 
-echo "AppImage created: cache-cleaner-x86_64.AppImage"
+echo "AppImage created: bytepurge-x86_64.AppImage"

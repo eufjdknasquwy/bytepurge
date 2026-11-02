@@ -19,7 +19,8 @@ std::ofstream utils::ConsoleLogger::s_log;
 std::mutex utils::ConsoleLogger::s_log_mutex;
 void utils::ConsoleLogger::init()
 {
-    std::string log_path = s_home_path + "/.local/state/cache-cleaner/log-" + timestamp("%Y-%m-%d_%H:%M") + ".txt";
+    std::string log_path =
+        s_home_path + "/.local/state/" + PROJECT_NAME + "/log-" + timestamp("%Y-%m-%d_%H:%M") + ".txt";
 
     fs::path log(log_path);
     std::error_code ec;
@@ -41,8 +42,8 @@ void utils::ConsoleLogger::print_help_msg(const int indent, std::string_view arg
 }
 void utils::ConsoleLogger::export_report_to_json(core::ClearReport &clear_report)
 {
-    std::string report_path =
-        s_home_path + "/.local/state/cache-cleaner/reports/clear_report-" + timestamp("%Y-%m-%d_%H:%M:%S") + ".json";
+    std::string report_path = s_home_path + "/.local/state/" + PROJECT_NAME + "/reports/clear_report-" +
+                              timestamp("%Y-%m-%d_%H:%M:%S") + ".json";
 
     fs::path report(report_path);
     std::error_code ec;
@@ -74,7 +75,7 @@ void utils::ConsoleLogger::log(const core::LogLevel level, const std::string_vie
         {
             std::cout << YELLOW << full_msg << RESET << "\n";
             core::NotifyManager::send_notification("Logged warning. see log for more information",
-                                                   "Cache cleaner: warning");
+                                                   std::string(PROJECT_GENERIC_NAME) + ": warning");
             break;
         }
         case core::LogLevel::Error:

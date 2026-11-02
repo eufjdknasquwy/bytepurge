@@ -7,7 +7,7 @@ core::Tray::Tray(ui::MainWindow &main_window) : m_main_window(main_window)
 {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-    m_indicator = app_indicator_new("cache-cleaner", "cache-cleaner", APP_INDICATOR_CATEGORY_APPLICATION_STATUS);
+    m_indicator = app_indicator_new(PROJECT_NAME, PROJECT_NAME, APP_INDICATOR_CATEGORY_APPLICATION_STATUS);
 #pragma GCC diagnostic pop
 
     app_indicator_set_status(m_indicator, APP_INDICATOR_STATUS_ACTIVE);

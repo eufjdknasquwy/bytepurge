@@ -1,6 +1,15 @@
 # Changelog
 
-## Latest stable release (v0.5.0) - 2026-11-01
+## Branding (v0.5.1) - 2026-11-02
+
+### Added
+- Icons of many resolutions such as x32, x64, x256 and more
+
+### Changed
+- Cache cleaner is now Byte Purge
+- `bytepurge` command instead of `cache-cleaner`
+
+## Stable release (v0.5.0) - 2026-11-01
 
 ### Added
 - SIGINT/SIGTERM Handler

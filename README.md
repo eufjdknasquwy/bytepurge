@@ -1,14 +1,14 @@
-# Cache cleaner
+# Byte Purge
 
 ![Platform](https://img.shields.io/badge/message-Linux-lightgrey?label=Platform)
-[![Release](https://img.shields.io/github/v/release/eufjdknasquwy/cache-cleaner-linux?label=Release)](https://github.com/eufjdknasquwy/cache-cleaner-linux/releases)
+[![Release](https://img.shields.io/github/v/release/eufjdknasquwy/bytepurge?label=Release)](https://github.com/eufjdknasquwy/bytepurge/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Changelog](https://img.shields.io/badge/Changelog-blue)](CHANGELOG.md)
 ![C++](https://img.shields.io/badge/C%2B%2B-20-blue)
 ![GTKmm3](https://img.shields.io/badge/GTKmm-3-blue?logo=gtk&logoColor=white)
-[![Linux testing](https://img.shields.io/github/actions/workflow/status/eufjdknasquwy/cache-cleaner-linux/ci.yml?label=Linux-testing&branch=main)](https://github.com/eufjdknasquwy/cache-cleaner-linux/actions/workflows/ci.yml)
-[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?logo=appimage&logoColor=white)](https://github.com/eufjdknasquwy/cache-cleaner-linux/releases/latest/download/cache-cleaner-x86_64.AppImage)
-[![Download Binary](https://img.shields.io/badge/Download-Binary-blue?logo=linux&logoColor=white)](https://github.com/eufjdknasquwy/cache-cleaner-linux/releases/latest/download/cache-cleaner)
+[![Linux](https://img.shields.io/github/actions/workflow/status/eufjdknasquwy/bytepurge/ci.yml?label=Linux&branch=main)](https://github.com/eufjdknasquwy/bytepurge/actions/workflows/ci.yml)
+[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?logo=appimage&logoColor=white)](https://github.com/eufjdknasquwy/bytepurge/releases/latest/download/bytepurge-x86_64.AppImage)
+[![Download Binary](https://img.shields.io/badge/Download-Binary-blue?logo=linux&logoColor=white)](https://github.com/eufjdknasquwy/bytepurge/releases/latest/download/bytepurge)
 
 A utility for Linux to free disk space by cleaning caches of package managers and other caches
 
@@ -51,7 +51,7 @@ Supports GUI and CLI (headless) modes.
 
 ### CLI
 - `--list` - list all caches
-- `--delete-safe`, `--delete-warning`, `--delete-unknown`, `--delete-system`, `--delete-user` - delete cache in category (all caches)
+- `--clear-safe`, `--clear-warning`, `--clear-unknown`, `--clear-system`, `--clear-user` - clear cache in category (all caches)
 - `-y` / `--yes`, `--dry-run` - for scripts / testing
 - `t` / `--tray` — run in tray
 - `-V` / `--verbose` - show debug logs
@@ -64,7 +64,7 @@ Supports GUI and CLI (headless) modes.
 - System cache and logs: `docker, podman, journalctl`
 
 ### Configuration
-- You can add your own caches by editing `~/.config/cache-cleaner/user_categories.json`.
+- You can add your own caches by editing `~/.config/bytepurge/user_categories.json`.
 See [Configuration](#configuration-1)
 
 ## How it works
@@ -94,18 +94,18 @@ makepkg -si
 ```
 
 ### Other distributions (appimage)
-1. Go to the [Releases](https://github.com/eufjdknasquwy/cache-cleaner-linux/releases) page.
-2. Download the latest `cache-cleaner-x86_64.AppImage` file
+1. Go to the [Releases](https://github.com/eufjdknasquwy/bytepurge/releases) page.
+2. Download the latest `bytepurge-x86_64.AppImage` file
 3. Open directory with downloaded file in terminal, make it executable and launch it:
   ```bash
-  chmod +x cache-cleaner-x86_64.AppImage
-  ./cache-cleaner-x86_64.AppImage
+  chmod +x bytepurge-x86_64.AppImage
+  ./bytepurge-x86_64.AppImage
   ```
 
 ### Other distributions (building from source)
 ```bash
-git clone https://github.com/eufjdknasquwy/cache-cleaner-linux
-cd cache-cleaner-linux
+git clone https://github.com/eufjdknasquwy/bytepurge
+cd bytepurge
 cmake -B build -S .
 cmake --build build
 sudo cmake --install build # for .desktop file and a terminal command in your system
@@ -117,18 +117,18 @@ sudo cmake --install build # for .desktop file and a terminal command in your sy
 1. Install the program (see above)
 2. Run:
   ```bash
-  cache-cleaner
+  bytepurge
   # or appimage version:
-  ./cache-cleaner-x86_64.AppImage
+  ./bytepurge-x86_64.AppImage
   ```
 3. Select the caches you want to clean and confirm
 
 ### CLI
-See `cache-cleaner --help` in your terminal
+See `bytepurge --help` in your terminal
 
 ## Configuration
 
-`~/.config/cache-cleaner/user_categories.json` - path to custom configuration
+`~/.config/bytepurge/user_categories.json` - path to custom configuration
 
 Example:
 ```json

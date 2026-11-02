@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     load_pm_config_thread.join();
     utils::SystemDetector::list_detections();
 
-    auto app = Gtk::Application::create("org.example.cache-cleaner");
+    auto app = Gtk::Application::create("org.example." + std::string(PROJECT_NAME));
 
     Glib::signal_io().connect(
         [](const Glib::IOCondition &) -> bool
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 
     ui::MainWindow main_window;
 
-    utils::ConsoleLogger::log(core::LogLevel::Info, "Cache cleaner started");
+    utils::ConsoleLogger::log(core::LogLevel::Info, std::string(PROJECT_GENERIC_NAME) + " started");
 
     load_config_thread.join();
     if (!core::args.tray) main_window.show_window();

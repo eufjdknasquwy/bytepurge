@@ -28,7 +28,7 @@ int core::ConfigLoader::load_json_file(json &json_config, const std::string &pat
 {
     try
     {
-        if (path.starts_with("/org/example/cache-cleaner/"))
+        if (path.starts_with("/org/example/" + std::string(PROJECT_NAME) + "/"))
         {
             json_config = load_embedded_json(path);
             if (json_config.is_null() || json_config.empty()) return 1;
@@ -200,7 +200,7 @@ void core::ConfigLoader::load_pm_config()
  */
 void core::ConfigLoader::ensure_user_config_exists()
 {
-    const fs::path config_dir = get_home_dir() / ".config" / "cache-cleaner";
+    const fs::path config_dir = get_home_dir() / ".config" / PROJECT_NAME;
     const fs::path config_file = config_dir / "user_categories.json";
     std::error_code ec;
 
@@ -223,7 +223,8 @@ void core::ConfigLoader::ensure_user_config_exists()
             utils::ConsoleLogger::log(core::LogLevel::Error, ("Cannot create " + config_file.string()));
             return;
         }
-        std::string default_config = load_embedded_string("/org/example/cache-cleaner/user_categories_template.json");
+        std::string default_config =
+            load_embedded_string("/org/example/" + std::string(PROJECT_NAME) + "/user_categories_template.json");
         if (default_config.empty())
         {
             utils::ConsoleLogger::log(core::LogLevel::Error,

@@ -1,13 +1,13 @@
 [Desktop Entry]
 Version=1.5
 Type=Application
-Name=Cache cleaner
-GenericName=Cache Cleaner
+Name=Byte Purge
+GenericName=Byte Purge
 Comment=A utility for Linux to free disk space
-Exec=cache-cleaner
-Icon=cache-cleaner
+Exec=bytepurge
+Icon=bytepurge
 Terminal=false
 Categories=System;Utility;
 Keywords=cache;clean;cleaner;disk;space;trash;
 StartupNotify=true
-StartupWMClass=cache-cleaner
+StartupWMClass=bytepurge
