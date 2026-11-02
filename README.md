@@ -1,16 +1,39 @@
-# Byte Purge
+<div align="center">
+  <img src="assets/icons/bytepurge-512.png" alt="BytePurge Logo" width="192" height="192">
+  
+  <h1>Byte Purge</h1>
+  
+  <p><b>A fast utility for Linux to free disk space by cleaning caches of package managers and other applications.</b></p>
+  
+  <p>
+    <a href="https://github.com/eufjdknasquwy/bytepurge/releases">
+      <img src="https://img.shields.io/github/v/release/eufjdknasquwy/bytepurge?label=Release&style=flat-square&color=blue" alt="Release">
+    </a>
+    <a href="https://opensource.org/licenses/MIT">
+      <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License">
+    </a>
+    <a href="CHANGELOG.md">
+      <img src="https://img.shields.io/badge/Changelog-blue?style=flat-square" alt="Changelog">
+    </a>
+    <img src="https://img.shields.io/badge/C%2B%2B-20-blue?style=flat-square" alt="C++">
+    <img src="https://img.shields.io/badge/GTKmm-3-blue?logo=gtk&logoColor=white&style=flat-square" alt="GTKmm3">
+    <img src="https://img.shields.io/badge/Platform-Linux-lightgrey?style=flat-square" alt="Platform">
+  </p>
+  
+  <p>
+    <a href="https://github.com/eufjdknasquwy/bytepurge/actions/workflows/ci.yml">
+      <img src="https://img.shields.io/github/actions/workflow/status/eufjdknasquwy/bytepurge/ci.yml?label=CI&branch=main&style=flat-square" alt="CI">
+    </a>
+    <a href="https://github.com/eufjdknasquwy/bytepurge/releases/latest/download/bytepurge-x86_64.AppImage">
+      <img src="https://img.shields.io/badge/Download-AppImage-blue?logo=appimage&logoColor=white&style=flat-square" alt="Download AppImage">
+    </a>
+    <a href="https://github.com/eufjdknasquwy/bytepurge/releases/latest/download/bytepurge">
+      <img src="https://img.shields.io/badge/Download-Binary-blue?logo=linux&logoColor=white&style=flat-square" alt="Download Binary">
+    </a>
+  </p>
+</div>
 
-![Platform](https://img.shields.io/badge/message-Linux-lightgrey?label=Platform)
-[![Release](https://img.shields.io/github/v/release/eufjdknasquwy/bytepurge?label=Release)](https://github.com/eufjdknasquwy/bytepurge/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Changelog](https://img.shields.io/badge/Changelog-blue)](CHANGELOG.md)
-![C++](https://img.shields.io/badge/C%2B%2B-20-blue)
-![GTKmm3](https://img.shields.io/badge/GTKmm-3-blue?logo=gtk&logoColor=white)
-[![Linux](https://img.shields.io/github/actions/workflow/status/eufjdknasquwy/bytepurge/ci.yml?label=Linux&branch=main)](https://github.com/eufjdknasquwy/bytepurge/actions/workflows/ci.yml)
-[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?logo=appimage&logoColor=white)](https://github.com/eufjdknasquwy/bytepurge/releases/latest/download/bytepurge-x86_64.AppImage)
-[![Download Binary](https://img.shields.io/badge/Download-Binary-blue?logo=linux&logoColor=white)](https://github.com/eufjdknasquwy/bytepurge/releases/latest/download/bytepurge)
-
-A utility for Linux to free disk space by cleaning caches of package managers and other caches
+---
 
 ## Table of contents
 
@@ -88,7 +111,7 @@ See [Configuration](#configuration-1)
 ## Installation
 
 ### AUR (Arch-based distributions)
-Currently, the AUR package is not available. But you can build it yourself:
+Currently the AUR package is not available. But you can build it yourself:
 ```bash
 makepkg -si
 ```

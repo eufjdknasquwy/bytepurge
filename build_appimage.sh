@@ -9,6 +9,7 @@ cmake --build build
 rm -rf AppDir
 mkdir -p AppDir/usr/bin
 mkdir -p AppDir/usr/share/applications
+mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps
 
 mkdir -p AppDir/usr/share/icons/hicolor/16x16/apps
 mkdir -p AppDir/usr/share/icons/hicolor/22x22/apps
@@ -22,7 +23,9 @@ mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
 
 # copying assets
 cp build/bytepurge AppDir/usr/bin/
-cp assets/bytepurge.desktop AppDir/bytepurge.desktop
+cp assets/bytepurge.desktop AppDir/usr/share/applications/ # .desktop file MUST go into usr/share/applications
+cp assets/bytepurge.desktop AppDir/bytepurge.desktop # ALSO copy it to the root (linuxdeploy expects it there)
+
 cp assets/icons/bytepurge-256.png AppDir/bytepurge.png
 cp assets/icons/bytepurge-16.png AppDir/usr/share/icons/hicolor/16x16/apps/bytepurge.png
 cp assets/icons/bytepurge-22.png AppDir/usr/share/icons/hicolor/22x22/apps/bytepurge.png
