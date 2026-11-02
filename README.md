@@ -166,7 +166,7 @@ Example:
   ]
 }
 ```
-For details, see [Configuration](docs/configuration/Configuration.md)
+For details, see [Configuration](docs/configuration/CONFIGURATION.md)
 
 ## Limitations
 

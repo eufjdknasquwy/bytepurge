@@ -123,8 +123,7 @@ void core::ConfigLoader::fill_cache_entry(core::CacheEntry &cache, const json &e
     }
     catch (const json::type_error &e)
     {
-        utils::ConsoleLogger::log(core::LogLevel::Error,
-                                  "JSON type error occured while trying to create clear report: ");
+        utils::ConsoleLogger::log(core::LogLevel::Error, "Failed to create a cache entry");
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::log(core::LogLevel::Error, ("ID: " + std::to_string(e.id)));
         utils::ConsoleLogger::flush_errors_to_ui();
@@ -132,7 +131,7 @@ void core::ConfigLoader::fill_cache_entry(core::CacheEntry &cache, const json &e
     }
     catch (const json::exception &e)
     {
-        utils::ConsoleLogger::log(LogLevel::Error, "JSON error occured while trying to create clear report: ");
+        utils::ConsoleLogger::log(LogLevel::Error, "JSON error occured while trying to create a cache entry: ");
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::log(core::LogLevel::Error, ("ID: " + std::to_string(e.id)));
         utils::ConsoleLogger::flush_errors_to_ui();
@@ -140,8 +139,9 @@ void core::ConfigLoader::fill_cache_entry(core::CacheEntry &cache, const json &e
     }
     catch (const std::exception &e)
     {
-        utils::ConsoleLogger::log(
-            LogLevel::Error, std::string("Unexpected error occured while trying to create clear report: ") + e.what());
+        utils::ConsoleLogger::log(LogLevel::Error,
+                                  std::string("Unexpected error occured while trying to create a cache entry: "));
+        utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::flush_errors_to_ui();
         return;
     }
@@ -311,8 +311,9 @@ void core::ConfigLoader::export_report_to_json(std::ofstream &report_file, core:
     }
     catch (const std::exception &e)
     {
-        utils::ConsoleLogger::log(
-            LogLevel::Error, std::string("Unexpected error occured while trying to create clear report: ") + e.what());
+        utils::ConsoleLogger::log(LogLevel::Error,
+                                  std::string("Unexpected error occured while trying to create clear report: "));
+        utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::flush_errors_to_ui();
         return;
     }

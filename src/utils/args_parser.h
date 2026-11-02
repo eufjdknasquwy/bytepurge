@@ -13,10 +13,10 @@ namespace utils
             static constexpr int EXIT_CODE_NO_ERRS = 0;
             static constexpr int EXIT_CODE_ERR = 1;
 
-            static constexpr const char *CLEAR_SAFE = "--clear-safe";
-            static constexpr const char *CLEAR_WARNING = "--clear-warning";
-            static constexpr const char *CLEAR_UNKNOWN = "--clear-unknown";
-            static constexpr const char *CLEAR_SYSTEM = "--clear-system";
-            static constexpr const char *CLEAR_USER = "--clear-user";
+            static constexpr const char *SAFE_CATEGORY = "--safe";
+            static constexpr const char *WARNING_CATEGORY = "--warning";
+            static constexpr const char *UNKNOWN_CATEGORY = "--unknown";
+            static constexpr const char *SYSTEM_CATEGORY = "--system";
+            static constexpr const char *USER_CATEGORY = "--user";
     };
 } // namespace utils

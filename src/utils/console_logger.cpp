@@ -40,6 +40,14 @@ void utils::ConsoleLogger::print_help_msg(const int indent, std::string_view arg
 {
     std::cout << "  " << std::left << std::setw(indent) << arg << "  " << desc << std::endl;
 }
+void utils::ConsoleLogger::print_cache(const int indent, std::string_view category, std::string_view path,
+                                       std::string_view size)
+{
+    std::cout << "  " << std::left << std::setw(indent) << category << "  " << std::left << std::setw(45) << path
+              << "  " << std::right << std::setw(10) << size << std::endl;
+    // std::cout << "  " << std::left << std::setw(indent) << category << "  " << path << "  " << std::left
+    //           << std::setw(indent + 100) << size << std::endl;
+}
 void utils::ConsoleLogger::export_report_to_json(core::ClearReport &clear_report)
 {
     std::string report_path = s_home_path + "/.local/state/" + PROJECT_NAME + "/reports/clear_report-" +
@@ -70,7 +78,13 @@ void utils::ConsoleLogger::log(const core::LogLevel level, const std::string_vie
 
     switch (level)
     {
-        case core::LogLevel::Info: std::cout << GREEN << full_msg << RESET << "\n"; break;
+        case core::LogLevel::Info:
+        {
+            if (core::args.quiet) return;
+
+            std::cout << GREEN << full_msg << RESET << "\n";
+            break;
+        }
         case core::LogLevel::Warning:
         {
             std::cout << YELLOW << full_msg << RESET << "\n";
@@ -88,9 +102,9 @@ void utils::ConsoleLogger::log(const core::LogLevel level, const std::string_vie
         case core::LogLevel::Debug:
         {
             constexpr std::string_view build_type = PROJECT_BUILD_TYPE;
-            if (build_type != "Debug" && !core::args.verbose) break;
+            if (build_type != "Debug" && !core::args.verbose) return;
 
-            std::cout << RESET << full_msg << RESET << std::endl;
+            std::cout << RESET << full_msg << RESET << "\n";
             break;
         }
         default: std::cout << RESET << full_msg << RESET << "\n"; break;

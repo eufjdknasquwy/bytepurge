@@ -46,9 +46,18 @@ ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
             return true;
         }); // closes program
 
-    Gtk::Label *title = Gtk::manage(new Gtk::Label()); // window title
-    title->set_markup("<b>" + std::string(PROJECT_GENERIC_NAME) + " v" + std::string(PROJECT_VERSION) + "</b>");
-    title->set_halign(Gtk::ALIGN_START);
+    Gtk::HeaderBar *header_bar = Gtk::manage(new Gtk::HeaderBar());
+    header_bar->set_title(std::string(PROJECT_GENERIC_NAME) + " v" + std::string(PROJECT_VERSION));
+    header_bar->set_show_close_button(true);
+
+    Gtk::Button *settings_btn = Gtk::manage(new Gtk::Button());
+    settings_btn->set_image(*Gtk::manage(new Gtk::Image("preferences-system-symbolic", Gtk::ICON_SIZE_BUTTON)));
+    settings_btn->set_tooltip_text("Settings");
+    settings_btn->signal_clicked().connect([]() {});
+
+    // Gtk::Label *title = Gtk::manage(new Gtk::Label()); // window title
+    // title->set_markup("<b>" + std::string(PROJECT_GENERIC_NAME) + " v" + std::string(PROJECT_VERSION) + "</b>");
+    // title->set_halign(Gtk::ALIGN_START);
 
     m_dispatcher.connect(sigc::mem_fun(*this, &ui::MainWindow::on_scan_cache_finished));
 
@@ -69,10 +78,13 @@ ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
     m_window_box->pack_start(*m_scroll, true, true, DEFAULT_PADDING);
     m_window_box->pack_end(*m_bottom_box, false, false, DEFAULT_PADDING);
 
-    m_top_box->pack_start(*title, false, false, DEFAULT_PADDING);
+    header_bar->pack_end(*settings_btn);
+    m_window->set_titlebar(*header_bar);
+    // m_top_box->pack_start(*title, false, false, DEFAULT_PADDING);
 
+    fill_header_bar();  // fills window header bar
     fill_content_box(); // fills middle part of the window
-    fill_bottom_box();  // fills bottom menu of the window
+    fill_footer_bar();  // fills window footer bar
 
     Css::apply_css();
     m_tray = std::make_unique<core::Tray>(*this);
@@ -101,6 +113,9 @@ void ui::MainWindow::request_shutdown()
         auto app = Gtk::Application::get_default();
         if (app) app->quit();
     }
+}
+void ui::MainWindow::fill_header_bar()
+{
 }
 void ui::MainWindow::fill_content_box()
 {
@@ -156,7 +171,7 @@ void ui::MainWindow::fill_content_box()
     if (m_system_expander) m_content_box->pack_start(*m_system_expander, false, false, 5);
     if (m_user_expander) m_content_box->pack_start(*m_user_expander, false, false, 5);
 }
-void ui::MainWindow::fill_bottom_box()
+void ui::MainWindow::fill_footer_bar()
 {
     m_close_button = Gtk::manage(new Gtk::Button("Close"));
     m_close_button->signal_clicked().connect([this]() { m_window->close(); });
@@ -489,9 +504,12 @@ std::string ui::MainWindow::get_preview_text(std::vector<std::string> paths_to_c
     const auto filtered_paths = core::CacheCleaner::sort_cache(paths_to_clear, options);
 
     if (!filtered_paths.paths.empty()) preview_text += "Paths to delete:\n\n";
+    std::string size_str;
     for (const auto &cache : filtered_paths.paths)
     {
-        preview_text += cache + "\n";
+        uintmax_t bytes = core::CacheCleaner::size(cache);
+        size_str = bytes == core::UNKNOWN_SIZE ? "Unknown size" : core::format_size(bytes);
+        preview_text += cache + "  " + size_str + "\n";
     }
 
     if (!filtered_paths.commands.empty()) preview_text += "\nCommands to execute:\n\n";

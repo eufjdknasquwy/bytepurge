@@ -1,9 +1,21 @@
 # Changelog
 
-## Branding (v0.5.1) - 2026-11-02
+## Latest patch (v0.5.2) - 2026-11-02
 
 ### Added
-- Icons of many resolutions such as x32, x64, x256 and more
+- Header bar
+- Size of caches in `--list` option and in preview
+
+### Changed
+- Cache deletes permanently instead of to trash (will add an option for cleaning to trash)
+
+### Fixed
+- Logging debug messages even without `--verbose` option
+
+## Rebranding (v0.5.1) - 2026-11-02
+
+### Added
+- Icons of many resolutions such as x32, x64, x256 and others
 
 ### Changed
 - Cache cleaner is now Byte Purge

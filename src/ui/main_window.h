@@ -87,8 +87,9 @@ namespace ui
             bool m_cleaning_in_progress = false;
             sigc::connection m_grace_timer;
 
+            void fill_header_bar();
             void fill_content_box();
-            void fill_bottom_box();
+            void fill_footer_bar();
 
             void on_scan_cache_finished();
 

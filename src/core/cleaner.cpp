@@ -172,28 +172,28 @@ void core::CacheCleaner::clear_cache(const std::vector<std::string> &paths_to_cl
             }
             continue;
         }
-        // if (path == yay_dir)
-        // {
-        //     if (!options.dry_run || !options.preview)
-        //         utils::ConsoleLogger::log(core::LogLevel::Info, "Deleting yay cache...");
-        //     else if (options.dry_run) utils::ConsoleLogger::printmsg("[dry-run] Would delete yay cache");
-        //
-        //     for (const auto &entry : fs::directory_iterator(yay_dir))
-        //     {
-        //         if (!AUR_EXCEPTIONS.contains(entry.path().filename().string())) delete_paths(entry, options);
-        //     }
-        // }
-        // else if (path == paru_dir)
-        // {
-        //     if (!options.dry_run || !options.preview)
-        //         utils::ConsoleLogger::log(core::LogLevel::Info, "Deleting paru cache...");
-        //     else if (options.dry_run) utils::ConsoleLogger::printmsg("[dry-run] Would delete paru cache");
-        //
-        //     for (const auto &entry : fs::directory_iterator(paru_dir))
-        //     {
-        //         if (!AUR_EXCEPTIONS.contains(entry.path().filename().string())) delete_paths(entry, options);
-        //     }
-        // }
+        if (path == yay_dir)
+        {
+            if (!options.dry_run || !options.preview)
+                utils::ConsoleLogger::log(core::LogLevel::Info, "Deleting yay cache...");
+            else if (options.dry_run) utils::ConsoleLogger::printmsg("[dry-run] Would delete yay cache");
+
+            for (const auto &entry : fs::directory_iterator(yay_dir))
+            {
+                if (!AUR_EXCEPTIONS.contains(entry.path().filename().string())) delete_paths(entry.path(), options);
+            }
+        }
+        else if (path == paru_dir)
+        {
+            if (!options.dry_run || !options.preview)
+                utils::ConsoleLogger::log(core::LogLevel::Info, "Deleting paru cache...");
+            else if (options.dry_run) utils::ConsoleLogger::printmsg("[dry-run] Would delete paru cache");
+
+            for (const auto &entry : fs::directory_iterator(paru_dir))
+            {
+                if (!AUR_EXCEPTIONS.contains(entry.path().filename().string())) delete_paths(entry.path(), options);
+            }
+        }
         else
         {
             auto it = command_paths.find(path);
@@ -261,7 +261,6 @@ std::future<void> core::CacheCleaner::run_command(const std::string &command, co
                 if (g_shutdown_requested) return;
 
                 Glib::spawn_command_line_sync(command, &stdout_str, &stderr_str, &exit_code);
-                // Glib::spawn_command_line_async(command);
 
                 if (exit_code == 0) utils::ConsoleLogger::log(core::LogLevel::Info, ("Command succeeded: " + command));
                 else
@@ -318,8 +317,10 @@ std::future<void> core::CacheCleaner::del_to_trash(const std::string &path, cons
                 if (g_shutdown_requested) return;
 
                 std::uintmax_t bytes = size(path);
-                auto file = Gio::File::create_for_path(path);
-                file->trash();
+
+                fs::remove_all(path);
+                // auto file = Gio::File::create_for_path(path);
+                // file->trash();
 
                 utils::ConsoleLogger::log(core::LogLevel::Info,
                                           ("Deleted " + path + " to trash, cleared " + format_size(bytes)));

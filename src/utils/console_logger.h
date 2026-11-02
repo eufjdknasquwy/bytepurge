@@ -13,6 +13,8 @@ namespace utils
             static void printmsg(const std::string_view message);
             static void printerr(const std::string_view message);
             static void print_help_msg(const int indent, std::string_view arg, std::string_view desc);
+            static void print_cache(const int indent, std::string_view category, std::string_view path,
+                                    std::string_view size);
 
             static void log(const core::LogLevel level, const std::string_view message);
             static void flush_errors_to_ui();

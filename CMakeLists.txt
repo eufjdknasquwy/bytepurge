@@ -29,6 +29,7 @@ set(SOURCES
     src/ui/css.cpp
     src/ui/main_window.cpp
     src/ui/message_dialog_helper.cpp
+    src/ui/settings_window.cpp
     src/ui/ui_helper.cpp
 
     src/utils/args_parser.cpp

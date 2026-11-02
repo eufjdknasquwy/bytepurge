@@ -1,4 +1,5 @@
 #pragma once
+#include "core/enums.h"
 namespace core
 {
     struct ClearReport
@@ -16,9 +17,16 @@ namespace core
     struct Args
     {
             bool tray = false;
+            bool list = false;
             bool verbose = false;
+            bool quiet = false;
+
             bool dry_run = false;
             bool yes = false;
+
+            bool clear = false;
+            std::vector<core::DangerLevel> clear_categories;
+            bool trash = false;
     };
     inline Args args;
 } // namespace core
