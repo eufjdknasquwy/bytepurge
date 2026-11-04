@@ -91,4 +91,14 @@ namespace core
 
         return buf;
     }
+    std::string expand_tilde(const std::string &path)
+    {
+        if (!path.empty() && path[0] == '~')
+        {
+            std::string clean_path = path;
+            clean_path.replace(0, 1, get_home_dir().string());
+            return clean_path;
+        }
+        return path;
+    }
 } // namespace core

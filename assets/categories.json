@@ -36,7 +36,8 @@
 
         // other
         { "name": "Thumbnails", "desc": "Image preview cache", "path": "~/.cache/thumbnails", "type": "path" },
-        { "name": "Ccache", "desc": "Compiler cache", "path": "~/.cache/ccache", "type": "path" },
+        //{ "name": "Ccache", "desc": "Compiler cache", "path": "~/.cache/ccache", "type": "path" },
+        { "name": "Ccache", "desc": "Compiler cache", "path": "~/.cache/ccache", "type": "command", "command": "ccache --clear" },
         { "name": "Flatpak", "desc": "Flatpak cache", "path": "~/.cache/flatpak", "type": "path" }
       ]
     },

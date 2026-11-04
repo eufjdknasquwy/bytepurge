@@ -1,15 +1,16 @@
-pkgbase = cache-cleaner-linux
-	pkgdesc = A utility for Linux to free disk space by cleaning caches of package managers and other caches
-	pkgver = 0.4.1
+pkgbase = bytepurge
+	pkgdesc = A fast utility for Linux to free disk space by cleaning caches of package managers and other applications.
+	pkgver = 0.5.1
 	pkgrel = 1
-	url = https://github.com/eufjdknasquwy/cache-cleaner-linux
+	url = https://github.com/eufjdknasquwy/bytepurge
 	arch = x86_64
 	license = MIT
 	makedepends = cmake
 	makedepends = ninja
 	depends = gtkmm3
 	depends = nlohmann-json
-	source = cache-cleaner-linux-0.4.1.tar.gz::https://github.com/eufjdknasquwy/cache-cleaner-linux/archive/v0.4.1.tar.gz
-	sha256sums = efd57abc05bf10c06d7f55ba45cf5b0083485f40b9704defb5266d858c8fbb62
+	depends = libayatana-appindicator
+	source = bytepurge-0.5.1.tar.gz::https://github.com/eufjdknasquwy/bytepurge/archive/v0.5.1.tar.gz
+	sha256sums = 7915f995b5464c974060a8c6c340ef76852c27a4d9e35fadbe571ff162f25277
 
-pkgname = cache-cleaner-linux
+pkgname = bytepurge

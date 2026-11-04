@@ -29,7 +29,8 @@ void ui::MessageDialogHelper::init_error_handler()
 }
 void ui::MessageDialogHelper::spawn_error_dialog(const std::string &message)
 {
-    auto [dialog, box] = create_dialog(std::string(PROJECT_GENERIC_NAME) + ": error", "Cache cleaner: caught an error");
+    auto [dialog, box] = create_dialog(std::string(PROJECT_GENERIC_NAME) + ": error",
+                                       std::string(PROJECT_GENERIC_NAME) + ": caught an error");
 
     auto *message_label = Gtk::manage(new Gtk::Label(message));
     message_label->set_halign(Gtk::ALIGN_START);

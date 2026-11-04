@@ -15,6 +15,7 @@ pkg/
 AppDir/
 src/cache-cleaner-linux-*/
 *.AppImage
+update_*.sh
 
 # profiler
 perf*

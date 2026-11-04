@@ -45,8 +45,6 @@ void utils::ConsoleLogger::print_cache(const int indent, std::string_view catego
 {
     std::cout << "  " << std::left << std::setw(indent) << category << "  " << std::left << std::setw(45) << path
               << "  " << std::right << std::setw(10) << size << std::endl;
-    // std::cout << "  " << std::left << std::setw(indent) << category << "  " << path << "  " << std::left
-    //           << std::setw(indent + 100) << size << std::endl;
 }
 void utils::ConsoleLogger::export_report_to_json(core::ClearReport &clear_report)
 {

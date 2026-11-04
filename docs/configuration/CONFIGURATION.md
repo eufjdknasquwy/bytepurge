@@ -22,13 +22,13 @@ The file consists of cache entries, which have name, path, type and other option
       "entries":
       [
           { "name": "Some cache", "path": "~/.cache/some-cache", "type": "path" },
-          { "name": "Other cache", "path": "~/.cache/other-cache", "type": "command", "command": "other-cache --clean" } // NO COMMA HERE, otherwise - trailing comma parsing error
+          { "name": "Other cache", "path": "~/.cache/other-cache", "type": "command", "command": "other-cache --clean" } // NO COMMA HERE
       ]
     }
   ]
 }
 ```
-**Note**: Make sure there is no trailing comma after the last entry } in the array, otherwise the JSON parser will fail.
+**Note**: Make sure there is no trailing comma after the last entry } in the array, otherwise the JSON parser will fail
 
 ## Entries
 - **name** (optional): name that will be displayed in a table
@@ -49,7 +49,7 @@ To add a cache, that will be deleted by path, you can add it like this:
 ```
 
 2. Example 2:
-To add a cache, that is deleted by command without root, you should set "type" to "command":
+To add a cache, that is deleted by command without root, you should set "type" to "command" and add the command:
 ```json
 { "name": "My app", "desc": "Description for this cache", "path": "~/.cache/my-app", "type": "command", "command": "myapp --clean cache", "root": false }
 ```

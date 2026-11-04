@@ -54,7 +54,7 @@
 
 ## Status
 
-**Alpha v0.5.1** — supports `yay`, `paru`, `pip`, `go`, `nuget`, `npm`,
+**Beta v0.6.0** — supports `yay`, `paru`, `pip`, `go`, `nuget`, `npm`,
 and system caches: `pacman`, `apt`, `dnf`, `flatpak`, `snap`, `journalctl`.
 Supports GUI and CLI (headless) modes.
 
@@ -180,6 +180,7 @@ For details, see [Configuration](docs/configuration/CONFIGURATION.md)
 - No progress bar for delete operations
 - No way to cancel deletion (except for Ctrl+C)
 - Currently no AUR repository
+- UI freezes while scanning cache
 
 ## Roadmap
 
@@ -202,6 +203,8 @@ For details, see [Configuration](docs/configuration/CONFIGURATION.md)
 - [x] Tray
 - [x] Preview before deletion
 - [x] Freed size in notifications and clear report
+- [x] Proper headbar
+- [x] Settings
 
 ### Planned
 - [ ] Port from GTK3 to GTK4 and port from Appindicator to Appindicator-glib
@@ -210,11 +213,10 @@ For details, see [Configuration](docs/configuration/CONFIGURATION.md)
 - [ ] Search cache in categories
 - [ ] Disk analyzer
 - [ ] Button to delete from every category
-- [ ] Hotkeys
 - [ ] Cleaner of old Linux kernels
 - [ ] Big files finder - top x biggest files
 - [ ] Script type for user config (can add a script to execute)
-- [ ] Cleaner of browser files (history, cookies and other)
+- [ ] Cleaner of browser caches (history, cookies and other)
 
 ## Changelog
 

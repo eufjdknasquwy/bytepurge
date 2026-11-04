@@ -1,10 +1,12 @@
 # Changelog
 
-## Latest patch (v0.5.2) - 2026-11-02
+## Latest release (v0.6.0) - 2026-11-04
 
 ### Added
 - Header bar
+- App settings
 - Size of caches in `--list` option and in preview
+- Documentation for configuration
 
 ### Changed
 - Cache deletes permanently instead of to trash (will add an option for cleaning to trash)

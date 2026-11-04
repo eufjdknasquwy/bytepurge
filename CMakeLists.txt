@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(bytepurge VERSION 0.5.1 LANGUAGES C CXX)
+project(bytepurge VERSION 0.6.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20) # c++ version
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -119,7 +119,7 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
 )
 
-# png icon installment of different resolutions
+# png icons installment of different resolutions
 set(ICON_SIZES 16 22 24 32 48 64 128 256 512)
 foreach(SIZE ${ICON_SIZES})
     install(FILES

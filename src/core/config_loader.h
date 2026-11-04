@@ -16,9 +16,14 @@ namespace core
             DangerLevel danger = DangerLevel::Unknown;
             bool root = false;
     };
+    struct Settings
+    {
+            bool delete_to_trash = false;
+    };
     struct Config
     {
             std::vector<CacheEntry> entries;
+            Settings settings;
     };
     class ConfigLoader
     {
@@ -33,6 +38,7 @@ namespace core
             }
             static std::string danger_to_str(core::DangerLevel d);
             static void export_report_to_json(std::ofstream &report_file, core::ClearReport &clear_report);
+            static void save_settings(Settings &settings);
 
         private:
             static core::Config s_config;
@@ -41,8 +47,10 @@ namespace core
             static DangerLevel str_to_danger(const std::string_view d);
 
             static void load_user_config();
+            static void load_settings();
             static int load_json_file(json &json_config, const std::string &path);
             static json load_embedded_json(const std::string &resource_path);
             static void ensure_user_config_exists();
+            static void export_to_json(std::ofstream &file, json &j);
     };
 } // namespace core

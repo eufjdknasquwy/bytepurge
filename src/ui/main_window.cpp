@@ -108,8 +108,8 @@ void ui::MainWindow::fill_header_bar()
     settings_btn->signal_clicked().connect(
         [this]()
         {
-            if (!m_settings_window) m_settings_window = std::make_unique<ui::SettingsWindow>();
-            m_settings_window->open_settings_window();
+            if (!m_settings_window) m_settings_window = std::make_unique<ui::SettingsWindow>(m_config);
+            m_settings_window->open_settings_window(*m_window);
         });
 
     m_header_bar->pack_end(*settings_btn);
@@ -397,7 +397,11 @@ Gtk::Expander *ui::MainWindow::create_category(const std::string &title, const s
                 std::thread(
                     [paths_to_clear, this]()
                     {
-                        auto result = core::CacheCleaner::sort_cache(paths_to_clear);
+                        core::ClearOptions options;
+
+                        options.delete_to_trash = m_config.settings.delete_to_trash;
+
+                        auto result = core::CacheCleaner::sort_cache(paths_to_clear, options);
                         Glib::signal_idle().connect_once(
                             [result, this]() mutable
                             {
@@ -516,6 +520,9 @@ std::string ui::MainWindow::get_preview_text(std::vector<std::string> paths_to_c
     {
         preview_text += command + "\n";
     }
+    if (m_config.settings.delete_to_trash)
+        preview_text +=
+            "\nNote: files will be deleted to trash,\n the disk space will not be freed until you empty the trash";
 
     return preview_text;
 }

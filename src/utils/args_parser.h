@@ -9,7 +9,7 @@ namespace utils
             static void print_help();
 
         private:
-            static constexpr int DEFAULT_HELP_FLAG_WIDTH = 40;
+            static constexpr int DEFAULT_HELP_FLAG_WIDTH = 25;
             static constexpr int EXIT_CODE_NO_ERRS = 0;
             static constexpr int EXIT_CODE_ERR = 1;
 

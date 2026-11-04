@@ -48,6 +48,7 @@ int core::ConfigLoader::load_json_file(json &json_config, const std::string &pat
     {
         utils::ConsoleLogger::log(core::LogLevel::Error, "Failed to open settings file: ");
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
+        utils::ConsoleLogger::log(core::LogLevel::Error, "Path: " + path);
         utils::ConsoleLogger::flush_errors_to_ui();
         return 1;
     }
@@ -57,6 +58,7 @@ int core::ConfigLoader::load_json_file(json &json_config, const std::string &pat
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::log(core::LogLevel::Error, ("ID: " + std::to_string(e.id)));
         utils::ConsoleLogger::log(core::LogLevel::Error, ("Parse error at byte " + std::to_string(e.byte)));
+        utils::ConsoleLogger::log(core::LogLevel::Error, "Path: " + path);
         utils::ConsoleLogger::flush_errors_to_ui();
         return 1;
     }
@@ -65,6 +67,7 @@ int core::ConfigLoader::load_json_file(json &json_config, const std::string &pat
         utils::ConsoleLogger::log(core::LogLevel::Error,
                                   "Unexpected error occured while trying to parse settings file: ");
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
+        utils::ConsoleLogger::log(core::LogLevel::Error, "Path: " + path);
         utils::ConsoleLogger::flush_errors_to_ui();
         return 1;
     }
@@ -74,7 +77,7 @@ json core::ConfigLoader::load_embedded_json(const std::string &resource_path)
 {
     try
     {
-        std::string json_str = load_embedded_string(resource_path);
+        std::string json_str = core::load_embedded_string(resource_path);
         return json::parse(json_str, nullptr, true, true);
     }
     catch (const std::runtime_error &e)
@@ -168,6 +171,7 @@ void core::ConfigLoader::load_config()
         }
     }
     load_user_config(); // loads user config from user json
+    load_settings();    // loads app settings
 }
 void core::ConfigLoader::load_user_config()
 {
@@ -213,7 +217,6 @@ void core::ConfigLoader::ensure_user_config_exists()
                                       ("Cannot create " + config_dir.string() + ": " + ec.message()));
             return;
         }
-        utils::ConsoleLogger::log(core::LogLevel::Info, ("Created directory: " + config_dir.string()));
     }
     if (!fs::exists(config_file))
     {
@@ -232,7 +235,6 @@ void core::ConfigLoader::ensure_user_config_exists()
             return;
         }
         out << default_config;
-        utils::ConsoleLogger::log(core::LogLevel::Info, ("Created default config: " + config_file.string()));
     }
 }
 /** Converts string danger level to enum type,
@@ -260,6 +262,32 @@ std::string core::ConfigLoader::danger_to_str(core::DangerLevel d)
         default:                         return "Unknown";
     }
 }
+void core::ConfigLoader::export_to_json(std::ofstream &file, json &j)
+{
+    try
+    {
+        file << j.dump(4);
+        if (file.fail())
+        {
+            utils::ConsoleLogger::log(LogLevel::Error, "Failed writing to clear report file");
+        }
+    }
+    catch (const json::exception &e)
+    {
+        utils::ConsoleLogger::log(LogLevel::Error, "JSON dump error occured: ");
+        utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
+        utils::ConsoleLogger::log(core::LogLevel::Error, ("ID: " + std::to_string(e.id)));
+        utils::ConsoleLogger::flush_errors_to_ui();
+        return;
+    }
+    catch (const std::exception &e)
+    {
+        utils::ConsoleLogger::log(LogLevel::Error, std::string("Unexpected JSON demp error occured: "));
+        utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
+        utils::ConsoleLogger::flush_errors_to_ui();
+        return;
+    }
+}
 void core::ConfigLoader::export_report_to_json(std::ofstream &report_file, core::ClearReport &clear_report)
 {
     try
@@ -275,22 +303,8 @@ void core::ConfigLoader::export_report_to_json(std::ofstream &report_file, core:
             j["commands"][command] = code;
         }
         j["freed_size"] = core::format_size(clear_report.freed_bytes);
-        try
-        {
-            report_file << j.dump(4);
-            if (report_file.fail())
-            {
-                utils::ConsoleLogger::log(LogLevel::Error, "Failed writing to clear report file");
-            }
-        }
-        catch (const json::type_error &e)
-        {
-            utils::ConsoleLogger::log(LogLevel::Error, "JSON dump error occured while trying to create clear report: ");
-            utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
-            utils::ConsoleLogger::log(core::LogLevel::Error, ("ID: " + std::to_string(e.id)));
-            utils::ConsoleLogger::flush_errors_to_ui();
-            return;
-        }
+
+        export_to_json(report_file, j);
     }
     catch (const json::type_error &e)
     {
@@ -317,4 +331,37 @@ void core::ConfigLoader::export_report_to_json(std::ofstream &report_file, core:
         utils::ConsoleLogger::flush_errors_to_ui();
         return;
     }
+}
+void core::ConfigLoader::load_settings()
+{
+    std::string settings_file_path = core::expand_tilde(std::string(core::DEFAULT_SETTINGS_PATH));
+    json json_settings = json::object();
+
+    if (fs::exists(settings_file_path))
+    {
+        if (load_json_file(json_settings, settings_file_path) != 0)
+        {
+            utils::ConsoleLogger::log(core::LogLevel::Warning, "Failed to load settings, using defaults...");
+            json_settings = json::object();
+        }
+    }
+    else
+    {
+        utils::ConsoleLogger::log(core::LogLevel::Warning, "Settings not found, using defaults...");
+    }
+
+    s_config.settings.delete_to_trash = json_settings.value("delete_to_trash", false);
+}
+void core::ConfigLoader::save_settings(Settings &settings)
+{
+    s_config.settings = settings;
+
+    json j;
+
+    j["delete_to_trash"] = s_config.settings.delete_to_trash;
+
+    std::string settings_file_path = core::expand_tilde(std::string(core::DEFAULT_SETTINGS_PATH));
+    std::ofstream settings_file(settings_file_path);
+
+    export_to_json(settings_file, j);
 }

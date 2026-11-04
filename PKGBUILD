@@ -1,6 +1,6 @@
 # Maintainer: eufjdknasquwy <e0723044@gmail.com>
 pkgname=bytepurge
-pkgver=0.5.1
+pkgver=0.6.0
 pkgrel=1
 pkgdesc="A fast utility for Linux to free disk space by cleaning caches of package managers and other applications."
 arch=('x86_64')

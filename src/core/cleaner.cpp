@@ -16,16 +16,6 @@ namespace fs = std::filesystem;
 const core::Config &core::CacheCleaner::s_config = core::ConfigLoader::get_config();
 core::ClearReport core::CacheCleaner::s_del_result;
 std::mutex core::CacheCleaner::s_del_result_mutex;
-std::string core::CacheCleaner::expand_tilde(const std::string &path)
-{
-    if (!path.empty() && path[0] == '~')
-    {
-        std::string clean_path = path;
-        clean_path.replace(0, 1, get_home_dir().string());
-        return clean_path;
-    }
-    return path;
-}
 bool core::CacheCleaner::exists(const std::string &path_str)
 {
     const auto &entries = core::ConfigLoader::get_config().entries;
@@ -48,7 +38,7 @@ bool core::CacheCleaner::exists(const std::string &path_str)
 }
 uintmax_t core::CacheCleaner::size(const std::string &path_str)
 {
-    auto path = expand_tilde(path_str);
+    const std::string &path = core::expand_tilde(path_str);
     std::error_code ec;
     for (const auto &entry : s_config.entries)
     {
@@ -94,7 +84,7 @@ core::ClearReport core::CacheCleaner::sort_cache(const std::vector<std::string> 
     {
         if (!path.empty())
         {
-            filtered_paths.push_back(expand_tilde(path));
+            filtered_paths.push_back(core::expand_tilde(path));
         }
     }
     clear_cache(filtered_paths, options);
@@ -126,7 +116,7 @@ void core::CacheCleaner::clear_cache(const std::vector<std::string> &paths_to_cl
 
     for (const auto &entry : s_config.entries)
     {
-        std::string parsed_path = expand_tilde(entry.path);
+        std::string parsed_path = core::expand_tilde(entry.path);
         if (entry.root)
         {
             root_paths.insert(parsed_path);
@@ -310,7 +300,7 @@ std::future<void> core::CacheCleaner::del_to_trash(const std::string &path, cons
 
     return std::async(
         std::launch::async,
-        [path]() -> void
+        [options, path]() -> void
         {
             try
             {
@@ -318,9 +308,15 @@ std::future<void> core::CacheCleaner::del_to_trash(const std::string &path, cons
 
                 std::uintmax_t bytes = size(path);
 
-                fs::remove_all(path);
-                // auto file = Gio::File::create_for_path(path);
-                // file->trash();
+                if (options.delete_to_trash)
+                {
+                    auto file = Gio::File::create_for_path(path);
+                    file->trash();
+                }
+                else
+                {
+                    fs::remove_all(path);
+                }
 
                 utils::ConsoleLogger::log(core::LogLevel::Info,
                                           ("Deleted " + path + " to trash, cleared " + format_size(bytes)));

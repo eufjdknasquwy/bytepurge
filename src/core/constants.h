@@ -10,6 +10,7 @@ namespace core
     fs::path get_css_style_path();
     std::string load_embedded_string(const std::string &resource_path);
     std::string format_size(std::uintmax_t bytes);
+    std::string expand_tilde(const std::string &path);
 
     inline constexpr int MIN_WIN_WIDTH = 650;
     inline constexpr int MIN_WIN_HEIGHT = 550;
@@ -24,10 +25,10 @@ namespace core
 
     inline constexpr std::uintmax_t UNKNOWN_SIZE = UINT32_MAX;
 
-    inline constexpr const char *DEFAULT_CATEGOS_PATH = "/org/example/bytepurge/categories.json";
     inline constexpr const char *DEFAULT_CATEGORIES_PATH = "/org/example/bytepurge/categories.json";
     inline constexpr const char *DEFAULT_PACKAGE_MANAGERS_PATH = "/org/example/bytepurge/package_managers.json";
     inline constexpr const char *DEFAULT_APP_STYLE_PATH = "/org/example/bytepurge/app_style.css";
     inline constexpr const char *DEFAULT_USER_CATEGORIES_TEMPLATE_PATH =
         "/org/example/bytepurge/user_categories_template.json";
+    inline constexpr const char *DEFAULT_SETTINGS_PATH = "~/.config/bytepurge/settings.json";
 } // namespace core

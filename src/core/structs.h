@@ -13,6 +13,7 @@ namespace core
             bool dry_run = false;
             bool cli = false;
             bool preview = false;
+            bool delete_to_trash = false;
     };
     struct Args
     {

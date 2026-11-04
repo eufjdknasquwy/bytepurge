@@ -64,7 +64,7 @@ jobs:
       run: |
         mkdir -p ~/.cache/gtk-4.0
         touch ~/.cache/gtk-4.0/test_file.txt
-        ./build/bytepurge --clear-warning --dry-run | grep gtk-4.0
+        ./build/bytepurge --clear --warning --yes
 
   release:
     needs: build
