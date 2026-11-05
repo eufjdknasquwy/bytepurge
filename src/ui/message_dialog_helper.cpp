@@ -3,7 +3,6 @@
 #include "ui/ui_helper.h"
 #include "utils/console_logger.h"
 #include <atomic>
-#include <cstddef>
 Glib::Dispatcher ui::MessageDialogHelper::s_error_dispatcher;
 std::string ui::MessageDialogHelper::s_pending_error;
 std::mutex ui::MessageDialogHelper::s_error_mutex;
@@ -39,13 +38,6 @@ void ui::MessageDialogHelper::spawn_error_dialog(const std::string &message)
     auto *submessage_label = Gtk::manage(new Gtk::Label());
     submessage_label->set_halign(Gtk::ALIGN_START);
     box->pack_start(*submessage_label, false, false, 0);
-
-    size_t pos = message.find("json");
-    if (pos != std::string::npos)
-    {
-        submessage_label->set_label(
-            "JSON error, watch out for trailing commas in the config, or incorrect JSON format.");
-    }
 
     dialog->show_all();
     dialog->run();

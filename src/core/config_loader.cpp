@@ -362,6 +362,7 @@ void core::ConfigLoader::ensure_settings_exist()
             utils::ConsoleLogger::reset_error_buffer();
             return;
         }
+        out << "{\n}";
     }
 }
 void core::ConfigLoader::load_settings()
