@@ -63,6 +63,7 @@ Supports GUI and CLI (headless) modes.
 ![Main window](docs/screenshots/Main_window.png)
 ![Settings window](docs/screenshots/Settings_window.png)
 ![CLI help menu](docs/screenshots/CLI_help_menu.png)
+![CLI cache list](docs/screenshots/CLI_cache_list.png)
 
 ## Features
 
@@ -72,6 +73,7 @@ Supports GUI and CLI (headless) modes.
 - Confirmations before deleting
 - Clear trash button
 - Tray
+- Settings window
 
 ### CLI
 - `-l` / `--list` - list all caches
@@ -173,8 +175,9 @@ For details, see [Configuration](docs/configuration/CONFIGURATION.md)
 ## Limitations
 
 - Linux only
-- Root caches require GUI polkit agent
-- Cannot launch user's own scripts for cleaning cache **yet**
+- Root caches require GUI polkit agent (or a launch from terminal with CLI polkit)
+- Cannot launch user's own scripts for cleaning cache yet
+- Browser cache cannot be cleaned yet
 
 ## Known issues
 

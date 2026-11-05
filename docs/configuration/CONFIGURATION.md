@@ -61,12 +61,12 @@ To add a cache, that is deleted by command with root, you should set "root" to t
 ```
 
 Root paths cannot be deleted, root cleaning is only available for the commands
-After you have added something in your user config, the cache should appear in the user category after scanning cache or relaunching the program (if the cache in the path exists)
+After you have added something in your user config, the cache should appear in the user category after scanning cache or relaunching the program
 
 ## Safety
 - Be cautious as this program executes commands through the system shell. Ensure you only copy configs from trusted sources or edit it carefully yourself, especially for commands that require root access
 
 ## Troubleshooting
 - If the cache doesn't show up in your user category, check if the path is valid and that directory does indeed exist
-- If a JSON parse error occurs, check for trailing commas, missing commas or missing quotation marks ("") in your config
+- If a JSON parse error occurs, look out for trailing commas, missing commas or missing quotation marks ("") in your config
 - If a "permission denied" error occurs, that means that the cache you are cleaning needs root. If you are cleaning by path, you cannot clean it in root. If you need to delete a root-owned directory by path, you should create a command entry instead (e.g., "command": "rm -rf /var/cache/my-app"), but again, be cautious

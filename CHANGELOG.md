@@ -1,6 +1,6 @@
 # Changelog
 
-## Latest release (v0.6.0) - 2026-11-04
+## Latest release (v0.6.0) - 2026-11-06
 
 ### Added
 - Header bar
@@ -9,7 +9,7 @@
 - Documentation for configuration
 
 ### Changed
-- Cache deletes permanently instead of to trash (will add an option for cleaning to trash)
+- Cache deletes permanently instead of to trash by default
 
 ### Fixed
 - Logging debug messages even without `--verbose` option
