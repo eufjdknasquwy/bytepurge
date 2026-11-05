@@ -30,5 +30,6 @@ namespace core
     inline constexpr const char *DEFAULT_APP_STYLE_PATH = "/org/example/bytepurge/app_style.css";
     inline constexpr const char *DEFAULT_USER_CATEGORIES_TEMPLATE_PATH =
         "/org/example/bytepurge/user_categories_template.json";
+    inline constexpr const char *DEFAULT_USER_CATEGORIES_PATH = "~/.config/bytepurge/user_categories.json";
     inline constexpr const char *DEFAULT_SETTINGS_PATH = "~/.config/bytepurge/settings.json";
 } // namespace core

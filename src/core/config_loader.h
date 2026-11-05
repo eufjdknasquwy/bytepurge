@@ -47,10 +47,13 @@ namespace core
             static DangerLevel str_to_danger(const std::string_view d);
 
             static void load_user_config();
+            static void ensure_user_config_exists();
+
             static void load_settings();
+            static void ensure_settings_exist();
+
             static int load_json_file(json &json_config, const std::string &path);
             static json load_embedded_json(const std::string &resource_path);
-            static void ensure_user_config_exists();
             static void export_to_json(std::ofstream &file, json &j);
     };
 } // namespace core

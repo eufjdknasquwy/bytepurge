@@ -33,6 +33,7 @@ ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
     m_window->set_title(std::string(PROJECT_GENERIC_NAME) + " v" + std::string(PROJECT_VERSION));
     m_window->set_size_request(core::MIN_WIN_WIDTH, core::MIN_WIN_HEIGHT);
     m_window->set_default_size(core::DEFAULT_WIN_WIDTH, core::DEFAULT_WIN_HEIGHT);
+    m_window->maximize();
 
     m_window->signal_delete_event().connect(
         [this](GdkEventAny *event) -> bool
@@ -49,7 +50,7 @@ ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
 
     m_header_bar = Gtk::manage(new Gtk::HeaderBar());
     m_header_bar->set_title(std::string(PROJECT_GENERIC_NAME) + " v" + std::string(PROJECT_VERSION));
-    m_header_bar->set_show_close_button(true);
+    m_header_bar->set_show_close_button(false);
 
     m_dispatcher.connect(sigc::mem_fun(*this, &ui::MainWindow::on_scan_cache_finished));
 
@@ -102,6 +103,57 @@ void ui::MainWindow::request_shutdown()
 }
 void ui::MainWindow::fill_header_bar()
 {
+    Gtk::Button *close_button = Gtk::manage(new Gtk::Button());
+    close_button->set_image(*Gtk::manage(new Gtk::Image("window-close-symbolic", Gtk::ICON_SIZE_MENU)));
+    close_button->get_style_context()->add_class("titlebutton");
+    close_button->get_style_context()->add_class("close");
+    close_button->signal_clicked().connect([this]() { m_window->close(); });
+    m_header_bar->pack_end(*close_button);
+
+    Gtk::Button *maximize_button = Gtk::manage(new Gtk::Button());
+
+    maximize_button->set_image(*Gtk::manage(new Gtk::Image("window-maximize-symbolic", Gtk::ICON_SIZE_MENU)));
+    maximize_button->get_style_context()->add_class("titlebutton");
+
+    maximize_button->signal_clicked().connect(
+        [this, maximize_button]()
+        {
+            if (m_window->is_maximized())
+            {
+                m_window->unmaximize();
+            }
+            else
+            {
+                m_window->maximize();
+            }
+        });
+
+    m_window->signal_window_state_event().connect(
+        [this, maximize_button](GdkEventWindowState *event) -> bool
+        {
+            if (event->changed_mask & GDK_WINDOW_STATE_MAXIMIZED)
+            {
+                if (event->new_window_state & GDK_WINDOW_STATE_MAXIMIZED)
+                {
+                    static_cast<Gtk::Image *>(maximize_button->get_image())
+                        ->set_from_icon_name("window-restore-symbolic", Gtk::ICON_SIZE_MENU);
+                }
+                else
+                {
+                    static_cast<Gtk::Image *>(maximize_button->get_image())
+                        ->set_from_icon_name("window-maximize-symbolic", Gtk::ICON_SIZE_MENU);
+                }
+            }
+            return false;
+        });
+    m_header_bar->pack_end(*maximize_button);
+
+    Gtk::Button *minimize_button = Gtk::manage(new Gtk::Button());
+    minimize_button->set_image(*Gtk::manage(new Gtk::Image("window-minimize-symbolic", Gtk::ICON_SIZE_MENU)));
+    minimize_button->get_style_context()->add_class("titlebutton");
+    minimize_button->signal_clicked().connect([this]() { hide_window(); });
+    m_header_bar->pack_end(*minimize_button);
+
     Gtk::Button *settings_btn = Gtk::manage(new Gtk::Button());
     settings_btn->set_image(*Gtk::manage(new Gtk::Image("preferences-system-symbolic", Gtk::ICON_SIZE_BUTTON)));
     settings_btn->set_tooltip_text("Settings");
@@ -111,7 +163,6 @@ void ui::MainWindow::fill_header_bar()
             if (!m_settings_window) m_settings_window = std::make_unique<ui::SettingsWindow>(m_config);
             m_settings_window->open_settings_window(*m_window);
         });
-
     m_header_bar->pack_end(*settings_btn);
 
     m_window->set_titlebar(*m_header_bar);

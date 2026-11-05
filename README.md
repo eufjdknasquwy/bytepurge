@@ -60,8 +60,9 @@ Supports GUI and CLI (headless) modes.
 
 ## Screenshots
 
-![GUI](docs/screenshots/GUI.png)
-![CLI](docs/screenshots/CLI.png)
+![Main window](docs/screenshots/Main_window.png)
+![Settings window](docs/screenshots/Settings_window.png)
+![CLI help menu](docs/screenshots/CLI_help_menu.png)
 
 ## Features
 
@@ -73,10 +74,11 @@ Supports GUI and CLI (headless) modes.
 - Tray
 
 ### CLI
-- `--list` - list all caches
-- `--clear-safe`, `--clear-warning`, `--clear-unknown`, `--clear-system`, `--clear-user` - clear cache in category (all caches)
+- `-l` / `--list` - list all caches
+- `-c` / `--clear` - clear cache in x category
+- `--safe`, `--warning`, `--unknown`, `--system`, `--user` - categories
 - `-y` / `--yes`, `--dry-run` - for scripts / testing
-- `t` / `--tray` — run in tray
+- `-t` / `--tray` — run in tray
 - `-V` / `--verbose` - show debug logs
 - `--trash` - clear trash bin
 
@@ -106,7 +108,7 @@ See [Configuration](#configuration-1)
 - nlohmann-json
 - gtkmm-3.0 (or -dev version)
 - libayatana-appindicator-3 (or -dev version)
-- GUI polkit agent (**recommended**, as program or system **may freeze** on system cache cleaning in GUI, if you do not have it. e.g. polkit-gnome)
+- GUI polkit agent (**recommended**, as program or system **may freeze** while cleaning system cache in GUI if you do not have it. e.g. polkit-gnome)
 
 ## Installation
 
@@ -230,3 +232,4 @@ MIT, see [LICENSE](LICENSE)
 
 - [gtkmm](https://github.com/GNOME/gtkmm) - GUI
 - [nlohmann/json](https://github.com/nlohmann/json) - JSON
+- [libayatana-appindicator](https://github.com/AyatanaIndicators/libayatana-appindicator) - Tray

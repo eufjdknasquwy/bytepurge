@@ -134,7 +134,7 @@ void core::ConfigLoader::fill_cache_entry(core::CacheEntry &cache, const json &e
     }
     catch (const json::exception &e)
     {
-        utils::ConsoleLogger::log(LogLevel::Error, "JSON error occured while trying to create a cache entry: ");
+        utils::ConsoleLogger::log(core::LogLevel::Error, "JSON error occured while trying to create a cache entry: ");
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::log(core::LogLevel::Error, ("ID: " + std::to_string(e.id)));
         utils::ConsoleLogger::flush_errors_to_ui();
@@ -142,7 +142,7 @@ void core::ConfigLoader::fill_cache_entry(core::CacheEntry &cache, const json &e
     }
     catch (const std::exception &e)
     {
-        utils::ConsoleLogger::log(LogLevel::Error,
+        utils::ConsoleLogger::log(core::LogLevel::Error,
                                   std::string("Unexpected error occured while trying to create a cache entry: "));
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::flush_errors_to_ui();
@@ -215,6 +215,7 @@ void core::ConfigLoader::ensure_user_config_exists()
         {
             utils::ConsoleLogger::log(core::LogLevel::Error,
                                       ("Cannot create " + config_dir.string() + ": " + ec.message()));
+            utils::ConsoleLogger::reset_error_buffer();
             return;
         }
     }
@@ -224,6 +225,7 @@ void core::ConfigLoader::ensure_user_config_exists()
         if (!out.is_open())
         {
             utils::ConsoleLogger::log(core::LogLevel::Error, ("Cannot create " + config_file.string()));
+            utils::ConsoleLogger::reset_error_buffer();
             return;
         }
         std::string default_config =
@@ -232,6 +234,7 @@ void core::ConfigLoader::ensure_user_config_exists()
         {
             utils::ConsoleLogger::log(core::LogLevel::Error,
                                       "Failed to load user_categories_template.json from resources");
+            utils::ConsoleLogger::reset_error_buffer();
             return;
         }
         out << default_config;
@@ -269,12 +272,13 @@ void core::ConfigLoader::export_to_json(std::ofstream &file, json &j)
         file << j.dump(4);
         if (file.fail())
         {
-            utils::ConsoleLogger::log(LogLevel::Error, "Failed writing to clear report file");
+            utils::ConsoleLogger::log(core::LogLevel::Error, "Failed to dump a JSON file");
+            utils::ConsoleLogger::reset_error_buffer();
         }
     }
     catch (const json::exception &e)
     {
-        utils::ConsoleLogger::log(LogLevel::Error, "JSON dump error occured: ");
+        utils::ConsoleLogger::log(core::LogLevel::Error, "JSON dump error occured: ");
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::log(core::LogLevel::Error, ("ID: " + std::to_string(e.id)));
         utils::ConsoleLogger::flush_errors_to_ui();
@@ -282,7 +286,7 @@ void core::ConfigLoader::export_to_json(std::ofstream &file, json &j)
     }
     catch (const std::exception &e)
     {
-        utils::ConsoleLogger::log(LogLevel::Error, std::string("Unexpected JSON demp error occured: "));
+        utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Unexpected JSON demp error occured: "));
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::flush_errors_to_ui();
         return;
@@ -317,7 +321,7 @@ void core::ConfigLoader::export_report_to_json(std::ofstream &report_file, core:
     }
     catch (const json::exception &e)
     {
-        utils::ConsoleLogger::log(LogLevel::Error, "JSON error occured while trying to create clear report: ");
+        utils::ConsoleLogger::log(core::LogLevel::Error, "JSON error occured while trying to create clear report: ");
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::log(core::LogLevel::Error, ("ID: " + std::to_string(e.id)));
         utils::ConsoleLogger::flush_errors_to_ui();
@@ -325,30 +329,48 @@ void core::ConfigLoader::export_report_to_json(std::ofstream &report_file, core:
     }
     catch (const std::exception &e)
     {
-        utils::ConsoleLogger::log(LogLevel::Error,
+        utils::ConsoleLogger::log(core::LogLevel::Error,
                                   std::string("Unexpected error occured while trying to create clear report: "));
         utils::ConsoleLogger::log(core::LogLevel::Error, std::string("Message: ") + e.what());
         utils::ConsoleLogger::flush_errors_to_ui();
         return;
     }
 }
-void core::ConfigLoader::load_settings()
+void core::ConfigLoader::ensure_settings_exist()
 {
-    std::string settings_file_path = core::expand_tilde(std::string(core::DEFAULT_SETTINGS_PATH));
-    json json_settings = json::object();
+    const fs::path config_dir = get_home_dir() / ".config" / PROJECT_NAME;
+    const fs::path settings_file = config_dir / "settings.json";
+    std::error_code ec;
 
-    if (fs::exists(settings_file_path))
+    if (!fs::exists(config_dir))
     {
-        if (load_json_file(json_settings, settings_file_path) != 0)
+        fs::create_directories(config_dir, ec);
+        if (ec)
         {
-            utils::ConsoleLogger::log(core::LogLevel::Warning, "Failed to load settings, using defaults...");
-            json_settings = json::object();
+            utils::ConsoleLogger::log(core::LogLevel::Error,
+                                      ("Cannot create " + config_dir.string() + ": " + ec.message()));
+            utils::ConsoleLogger::reset_error_buffer();
+            return;
         }
     }
-    else
+    if (!fs::exists(settings_file))
     {
-        utils::ConsoleLogger::log(core::LogLevel::Warning, "Settings not found, using defaults...");
+        std::ofstream out(settings_file);
+        if (!out.is_open())
+        {
+            utils::ConsoleLogger::log(core::LogLevel::Error, ("Cannot create " + settings_file.string()));
+            utils::ConsoleLogger::reset_error_buffer();
+            return;
+        }
     }
+}
+void core::ConfigLoader::load_settings()
+{
+    ensure_settings_exist();
+
+    json json_settings;
+    std::string settings_file_path = core::expand_tilde(std::string(core::DEFAULT_SETTINGS_PATH));
+    if (load_json_file(json_settings, settings_file_path) != 0) return;
 
     s_config.settings.delete_to_trash = json_settings.value("delete_to_trash", false);
 }

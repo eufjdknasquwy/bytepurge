@@ -65,8 +65,13 @@ void utils::ArgsParser::parse(int &argc, char *argv[])
         {
             core::cli::CliTools::delete_category(category);
         }
+        std::exit(EXIT_CODE_NO_ERRS);
     }
-    if (core::args.trash) core::cli::CliTools::clear_trash();
+    if (core::args.trash)
+    {
+        core::cli::CliTools::clear_trash();
+        std::exit(EXIT_CODE_NO_ERRS);
+    }
 }
 void utils::ArgsParser::print_help()
 {

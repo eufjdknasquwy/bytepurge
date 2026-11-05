@@ -48,5 +48,3 @@ fi
 
 # renaming appimage
 mv Byte_Purge*.AppImage bytepurge-x86_64.AppImage || true
-
-echo "AppImage created: bytepurge-x86_64.AppImage"
