@@ -17,12 +17,14 @@ src/cache-cleaner-linux-*/
 *.AppImage
 update_*.sh
 
-# profiler
+# profilers / debuggers
 perf*
 report*
 flame*
 Flame*
 profile.sh
+valgrind*
+heaptrack*
 
 # icons
 base.svg

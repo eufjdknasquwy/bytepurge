@@ -25,6 +25,14 @@ ui::MainWindow::~MainWindow()
 {
     if (s_instance == this) s_instance = nullptr;
 }
+void ui::MainWindow::nullout_expanders()
+{
+    m_safe_expander = nullptr;
+    m_warning_expander = nullptr;
+    m_unknown_expander = nullptr;
+    m_system_expander = nullptr;
+    m_user_expander = nullptr;
+}
 ui::MainWindow::MainWindow() : m_config(core::ConfigLoader::get_config())
 {
     s_instance = this;
@@ -197,14 +205,7 @@ void ui::MainWindow::fill_content_box()
     system_paths = filter_paths(system_paths);
     user_paths = filter_paths(user_paths);
 
-    if (m_safe_expander || m_warning_expander || m_unknown_expander || m_system_expander || m_user_expander)
-    {
-        m_safe_expander = nullptr;
-        m_warning_expander = nullptr;
-        m_unknown_expander = nullptr;
-        m_system_expander = nullptr;
-        m_user_expander = nullptr;
-    }
+    nullout_expanders();
 
     if (!safe_paths.empty()) m_safe_expander = create_category(SAFE_EXPANDER_TITLE, SAFE_EXPANDER_DESC, safe_paths);
     if (!warning_paths.empty())
@@ -272,11 +273,7 @@ void ui::MainWindow::on_scan_cache_finished() // update content box after scanni
     ui::UIHelper::clear_box(*m_content_box); // clear categories
     fill_content_box();                      // fill categories
 
-    m_safe_expander = nullptr;
-    m_warning_expander = nullptr;
-    m_unknown_expander = nullptr;
-    m_system_expander = nullptr;
-    m_user_expander = nullptr;
+    nullout_expanders();
 
     m_content_box->show_all();
     m_scan_cache_button->set_label("Scan cache");

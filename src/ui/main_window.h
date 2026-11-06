@@ -90,6 +90,8 @@ namespace ui
             bool m_cleaning_in_progress = false;
             sigc::connection m_grace_timer;
 
+            void nullout_expanders();
+
             void fill_header_bar();
             void fill_content_box();
             void fill_footer_bar();

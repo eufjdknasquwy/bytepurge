@@ -5,6 +5,7 @@ void ui::UIHelper::clear_box(Gtk::Box &box)
     for (auto *child : children)
     {
         box.remove(*child);
+        delete child;
     }
 }
 void ui::UIHelper::set_margin(Gtk::Widget &widget, int size)
