@@ -54,7 +54,7 @@
 
 ## Status
 
-**Beta v0.6.0** — supports `yay`, `paru`, `pip`, `go`, `nuget`, `npm`,
+**Beta v0.6.1** — supports `yay`, `paru`, `pip`, `go`, `nuget`, `npm`,
 and system caches: `pacman`, `apt`, `dnf`, `flatpak`, `snap`, `journalctl`.
 Supports GUI and CLI (headless) modes.
 

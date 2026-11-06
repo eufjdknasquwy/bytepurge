@@ -1,5 +1,10 @@
 # Changelog
 
+## Latest patch (v0.6.1) - 2026-11-06
+
+### Fixed
+- Memory leak when scanning cache
+
 ## Latest release (v0.6.0) - 2026-11-06
 
 ### Added
