@@ -13,7 +13,6 @@ pkg/
 *.tar.bz2
 *.SRCINFO.bak
 AppDir/
-src/cache-cleaner-linux-*/
 *.AppImage
 update_*.sh
 

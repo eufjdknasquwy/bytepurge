@@ -1,6 +1,11 @@
 # Changelog
 
-## Latest patch (v0.6.1) - 2026-11-06
+## Latest patch (v0.6.2) - 2026-11-15
+
+### Changed
+- Using paccache for cleaning pacman cache instead of broken pacman -Sc after pacman v7.1.0 update
+
+## Patch (v0.6.1) - 2026-11-06
 
 ### Fixed
 - Memory leak when scanning cache

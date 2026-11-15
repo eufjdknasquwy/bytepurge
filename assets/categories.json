@@ -143,7 +143,7 @@
       [
         // system package managers
         // (main)
-        { "name": "pacman", "desc": "Arch Linux package manager", "type": "command", "command": "pacman -Sc --noconfirm", "root": true },
+        { "name": "pacman", "desc": "Arch Linux package manager\nRequires pacman-contrib package", "type": "command", "command": "paccache -r -k0", "root": true },
         { "name": "dnf", "desc": "Fedora/RHEL package manager", "type": "command", "command": "dnf clean all", "root": true },
         { "name": "apt", "desc": "Debian/Ubuntu package manager", "type": "command", "command": "sh -c 'apt clean && apt autoclean'", "root": true },
 
