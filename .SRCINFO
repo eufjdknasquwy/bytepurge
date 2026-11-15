@@ -1,6 +1,6 @@
 pkgbase = bytepurge
 	pkgdesc = A fast utility for Linux to free disk space by cleaning caches of package managers and other applications.
-	pkgver = 0.6.1
+	pkgver = 0.6.2
 	pkgrel = 1
 	url = https://github.com/eufjdknasquwy/bytepurge
 	arch = x86_64
@@ -10,7 +10,7 @@ pkgbase = bytepurge
 	depends = gtkmm3
 	depends = nlohmann-json
 	depends = libayatana-appindicator
-	source = bytepurge-0.6.1.tar.gz::https://github.com/eufjdknasquwy/bytepurge/archive/v0.6.1.tar.gz
-	sha256sums = c85d49df9c5e7fe16cf8dd8d1bc38bb87944b0c683d1854a574056bd22227217
+	source = bytepurge-0.6.2.tar.gz::https://github.com/eufjdknasquwy/bytepurge/archive/v0.6.2.tar.gz
+	sha256sums = 60e9af7a6da7a7ce2df98a731aa33d26b5f3bce3424f1c6b45fc3d0de1369698
 
 pkgname = bytepurge

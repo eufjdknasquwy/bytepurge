@@ -9,7 +9,7 @@ license=('MIT')
 depends=('gtkmm3' 'nlohmann-json' 'libayatana-appindicator')
 makedepends=('cmake' 'ninja')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
-sha256sums=('c85d49df9c5e7fe16cf8dd8d1bc38bb87944b0c683d1854a574056bd22227217')
+sha256sums=('60e9af7a6da7a7ce2df98a731aa33d26b5f3bce3424f1c6b45fc3d0de1369698')
 
 build() {
   cmake -S "bytepurge-$pkgver" -B build -G Ninja \
